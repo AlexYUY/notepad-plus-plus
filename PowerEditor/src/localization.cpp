@@ -655,6 +655,8 @@ void NativeLangSpeaker::changeUserDefineLang(UserDefineDialog *userDefineDlg)
 				if (hItem)
 				{
 					const wchar_t *nameW = wmc.char2wchar(name, _nativeLangEncoding);
+					if (id == IDC_DOCK_BUTTON && userDefineDlg->isDocked())
+						nameW = getAttrNameByIdStr(TEXT("Undock"), userDefineDlgNode, std::to_string(IDC_UNDOCK_BUTTON).c_str()).c_str();
 					::SetWindowText(hItem, nameW);
 				}
 			}
@@ -1327,6 +1329,29 @@ generic_string NativeLangSpeaker::getAttrNameStr(const TCHAR *defaultStr, const 
 	{
 		WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
 		return wmc.char2wchar(name, _nativeLangEncoding);
+	}
+	return defaultStr;
+}
+
+	generic_string NativeLangSpeaker::getAttrNameByIdStr(const TCHAR *defaultStr, TiXmlNodeA *targetNode, const char *nodeL1Value, const char *nodeL1Name, const char *nodeL2Name) const
+{
+	if (!targetNode) return defaultStr;
+
+	for (TiXmlNodeA *childNode = targetNode->FirstChildElement("Item");
+		childNode;
+		childNode = childNode->NextSibling("Item"))
+	{
+		TiXmlElementA *element = childNode->ToElement();
+		const char *id = element->Attribute(nodeL1Name);
+		if (id && id[0] && !strcmp(id, nodeL1Value))
+		{
+			const char *name = element->Attribute(nodeL2Name);
+			if (name && name[0])
+			{
+				WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
+				return wmc.char2wchar(name, _nativeLangEncoding);
+			}
+		}
 	}
 	return defaultStr;
 }
