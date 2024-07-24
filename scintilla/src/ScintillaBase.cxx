@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cassert>
 #include <cstring>
+#include <cmath>
 
 #include <stdexcept>
 #include <string>
@@ -83,7 +84,7 @@ void ScintillaBase::InsertCharacter(std::string_view sv, CharacterSource charSou
 	if (!isFillUp) {
 		Editor::InsertCharacter(sv, charSource);
 	}
-	if (acActive) {
+	if (acActive && ac.Active()) { // if it was and still is active
 		AutoCompleteCharacterAdded(sv[0]);
 		// For fill ups add the character after the autocompletion has
 		// triggered so containers see the key so can display a calltip.
@@ -265,7 +266,7 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 		}
 	}
 
-	ListOptions options{
+	const ListOptions options{
 		vs.ElementColour(Element::List),
 		vs.ElementColour(Element::ListBack),
 		vs.ElementColour(Element::ListSelected),
@@ -273,8 +274,16 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 		ac.options,
 	};
 
+	int lineHeight;
+	if (vs.autocStyle != StyleDefault) {
+		AutoSurface surfaceMeasure(this);
+		lineHeight = static_cast<int>(std::lround(surfaceMeasure->Height(vs.styles[vs.autocStyle].font.get())));
+	} else {
+		lineHeight = vs.lineHeight;
+	}
+
 	ac.Start(wMain, idAutoComplete, sel.MainCaret(), PointMainCaret(),
-				lenEntered, vs.lineHeight, IsUnicodeMode(), technology, options);
+				lenEntered, lineHeight, IsUnicodeMode(), technology, options);
 
 	const PRectangle rcClient = GetClientRectangle();
 	Point pt = LocationFromPosition(sel.MainCaret() - lenEntered);
@@ -307,8 +316,8 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 	rcac.right = rcac.left + widthLB;
 	rcac.bottom = static_cast<XYPOSITION>(std::min(static_cast<int>(rcac.top) + heightLB, static_cast<int>(rcPopupBounds.bottom)));
 	ac.lb->SetPositionRelative(rcac, &wMain);
-	ac.lb->SetFont(vs.styles[StyleDefault].font.get());
-	const int aveCharWidth = static_cast<int>(vs.styles[StyleDefault].aveCharWidth);
+	ac.lb->SetFont(vs.styles[vs.autocStyle].font.get());
+	const int aveCharWidth = static_cast<int>(vs.styles[vs.autocStyle].aveCharWidth);
 	ac.lb->SetAverageCharWidth(aveCharWidth);
 	ac.lb->SetDelegate(this);
 
@@ -353,6 +362,8 @@ void ScintillaBase::AutoCompleteMove(int delta) {
 }
 
 void ScintillaBase::AutoCompleteMoveToCurrentWord() {
+	if (FlagSet(ac.options, AutoCompleteOption::SelectFirstItem))
+		return;
 	std::string wordCurrent = RangeText(ac.posStart - ac.startLen, sel.MainCaret());
 	ac.Select(wordCurrent.c_str());
 }
@@ -515,6 +526,7 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 	CreateCallTipWindow(rc);
 	ct.wCallTip.SetPositionRelative(rc, &wMain);
 	ct.wCallTip.Show();
+	ct.wCallTip.InvalidateAll();
 }
 
 void ScintillaBase::CallTipClick() {
@@ -581,7 +593,6 @@ public:
 	void PropSet(const char *key, const char *val);
 	const char *PropGet(const char *key) const;
 	int PropGetInt(const char *key, int defaultValue=0) const;
-	size_t PropGetExpanded(const char *key, char *result) const;
 
 	LineEndType LineEndTypesSupported() override;
 	int AllocateSubStyles(int styleBase, int numberStyles);
@@ -701,19 +712,6 @@ int LexState::PropGetInt(const char *key, int defaultValue) const {
 	return defaultValue;
 }
 
-size_t LexState::PropGetExpanded(const char *key, char *result) const {
-	if (instance) {
-		const char *value = instance->PropertyGet(key);
-		if (value) {
-			if (result) {
-				strcpy(result, value);
-			}
-			return strlen(value);
-		}
-	}
-	return 0;
-}
-
 LineEndType LexState::LineEndTypesSupported() {
 	if (instance) {
 		return static_cast<LineEndType>(instance->LineEndTypesSupported());
@@ -817,10 +815,7 @@ const char *LexState::DescriptionOfStyle(int style) {
 
 void ScintillaBase::NotifyStyleToNeeded(Sci::Position endStyleNeeded) {
 	if (!DocumentLexState()->UseContainerLexing()) {
-		const Sci::Line lineEndStyled =
-			pdoc->SciLineFromPosition(pdoc->GetEndStyled());
-		const Sci::Position endStyled =
-			pdoc->LineStart(lineEndStyled);
+		const Sci::Position endStyled = pdoc->LineStartPosition(pdoc->GetEndStyled());
 		DocumentLexState()->Colourise(endStyled, endStyleNeeded);
 		return;
 	}
@@ -955,6 +950,14 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	case Message::AutoCGetMaxWidth:
 		return maxListWidth;
 
+	case Message::AutoCSetStyle:
+		vs.autocStyle = static_cast<int>(wParam);
+		InvalidateStyleRedraw();
+		break;
+
+	case Message::AutoCGetStyle:
+		return vs.autocStyle;
+
 	case Message::RegisterImage:
 		ac.lb->RegisterImage(static_cast<int>(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
@@ -1055,8 +1058,7 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return StringResult(lParam, DocumentLexState()->PropGet(ConstCharPtrFromUPtr(wParam)));
 
 	case Message::GetPropertyExpanded:
-		return DocumentLexState()->PropGetExpanded(ConstCharPtrFromUPtr(wParam),
-			CharPtrFromSPtr(lParam));
+		return StringResult(lParam, DocumentLexState()->PropGet(ConstCharPtrFromUPtr(wParam)));
 
 	case Message::GetPropertyInt:
 		return DocumentLexState()->PropGetInt(ConstCharPtrFromUPtr(wParam), static_cast<int>(lParam));

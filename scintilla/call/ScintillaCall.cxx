@@ -231,7 +231,7 @@ Position ScintillaCall::GetStyledText(void *tr) {
 	return CallPointer(Message::GetStyledText, 0, tr);
 }
 
-Position ScintillaCall::GetStyledTextFull(void *tr) {
+Position ScintillaCall::GetStyledTextFull(TextRangeFull *tr) {
 	return CallPointer(Message::GetStyledTextFull, 0, tr);
 }
 
@@ -799,6 +799,66 @@ void ScintillaCall::EndUndoAction() {
 	Call(Message::EndUndoAction);
 }
 
+int ScintillaCall::UndoActions() {
+	return static_cast<int>(Call(Message::GetUndoActions));
+}
+
+void ScintillaCall::SetUndoSavePoint(int action) {
+	Call(Message::SetUndoSavePoint, action);
+}
+
+int ScintillaCall::UndoSavePoint() {
+	return static_cast<int>(Call(Message::GetUndoSavePoint));
+}
+
+void ScintillaCall::SetUndoDetach(int action) {
+	Call(Message::SetUndoDetach, action);
+}
+
+int ScintillaCall::UndoDetach() {
+	return static_cast<int>(Call(Message::GetUndoDetach));
+}
+
+void ScintillaCall::SetUndoTentative(int action) {
+	Call(Message::SetUndoTentative, action);
+}
+
+int ScintillaCall::UndoTentative() {
+	return static_cast<int>(Call(Message::GetUndoTentative));
+}
+
+void ScintillaCall::SetUndoCurrent(int action) {
+	Call(Message::SetUndoCurrent, action);
+}
+
+int ScintillaCall::UndoCurrent() {
+	return static_cast<int>(Call(Message::GetUndoCurrent));
+}
+
+void ScintillaCall::PushUndoActionType(int type, Position pos) {
+	Call(Message::PushUndoActionType, type, pos);
+}
+
+void ScintillaCall::ChangeLastUndoActionText(Position length, const char *text) {
+	CallString(Message::ChangeLastUndoActionText, length, text);
+}
+
+int ScintillaCall::UndoActionType(int action) {
+	return static_cast<int>(Call(Message::GetUndoActionType, action));
+}
+
+Position ScintillaCall::UndoActionPosition(int action) {
+	return Call(Message::GetUndoActionPosition, action);
+}
+
+int ScintillaCall::UndoActionText(int action, char *text) {
+	return static_cast<int>(CallPointer(Message::GetUndoActionText, action, text));
+}
+
+std::string ScintillaCall::UndoActionText(int action) {
+	return CallReturnString(Message::GetUndoActionText, action);
+}
+
 void ScintillaCall::IndicSetStyle(int indicator, Scintilla::IndicatorStyle indicatorStyle) {
 	Call(Message::IndicSetStyle, indicator, static_cast<intptr_t>(indicatorStyle));
 }
@@ -1035,6 +1095,14 @@ int ScintillaCall::AutoCGetMaxHeight() {
 	return static_cast<int>(Call(Message::AutoCGetMaxHeight));
 }
 
+void ScintillaCall::AutoCSetStyle(int style) {
+	Call(Message::AutoCSetStyle, style);
+}
+
+int ScintillaCall::AutoCGetStyle() {
+	return static_cast<int>(Call(Message::AutoCGetStyle));
+}
+
 void ScintillaCall::SetIndent(int indentSize) {
 	Call(Message::SetIndent, indentSize);
 }
@@ -1159,7 +1227,7 @@ Position ScintillaCall::FindText(Scintilla::FindOption searchFlags, void *ft) {
 	return CallPointer(Message::FindText, static_cast<uintptr_t>(searchFlags), ft);
 }
 
-Position ScintillaCall::FindTextFull(Scintilla::FindOption searchFlags, void *ft) {
+Position ScintillaCall::FindTextFull(Scintilla::FindOption searchFlags, TextToFindFull *ft) {
 	return CallPointer(Message::FindTextFull, static_cast<uintptr_t>(searchFlags), ft);
 }
 
@@ -1167,7 +1235,7 @@ Position ScintillaCall::FormatRange(bool draw, void *fr) {
 	return CallPointer(Message::FormatRange, draw, fr);
 }
 
-Position ScintillaCall::FormatRangeFull(bool draw, void *fr) {
+Position ScintillaCall::FormatRangeFull(bool draw, RangeToFormatFull *fr) {
 	return CallPointer(Message::FormatRangeFull, draw, fr);
 }
 
@@ -1235,7 +1303,7 @@ Position ScintillaCall::GetTextRange(void *tr) {
 	return CallPointer(Message::GetTextRange, 0, tr);
 }
 
-Position ScintillaCall::GetTextRangeFull(void *tr) {
+Position ScintillaCall::GetTextRangeFull(TextRangeFull *tr) {
 	return CallPointer(Message::GetTextRangeFull, 0, tr);
 }
 
@@ -2071,11 +2139,11 @@ void ScintillaCall::SetViewEOL(bool visible) {
 	Call(Message::SetViewEOL, visible);
 }
 
-void *ScintillaCall::DocPointer() {
-	return reinterpret_cast<void *>(Call(Message::GetDocPointer));
+IDocumentEditable *ScintillaCall::DocPointer() {
+	return reinterpret_cast<IDocumentEditable *>(Call(Message::GetDocPointer));
 }
 
-void ScintillaCall::SetDocPointer(void *doc) {
+void ScintillaCall::SetDocPointer(IDocumentEditable *doc) {
 	CallPointer(Message::SetDocPointer, 0, doc);
 }
 
@@ -2151,15 +2219,15 @@ int ScintillaCall::Zoom() {
 	return static_cast<int>(Call(Message::GetZoom));
 }
 
-void *ScintillaCall::CreateDocument(Position bytes, Scintilla::DocumentOption documentOptions) {
-	return reinterpret_cast<void *>(Call(Message::CreateDocument, bytes, static_cast<intptr_t>(documentOptions)));
+IDocumentEditable *ScintillaCall::CreateDocument(Position bytes, Scintilla::DocumentOption documentOptions) {
+	return reinterpret_cast<IDocumentEditable *>(Call(Message::CreateDocument, bytes, static_cast<intptr_t>(documentOptions)));
 }
 
-void ScintillaCall::AddRefDocument(void *doc) {
+void ScintillaCall::AddRefDocument(IDocumentEditable *doc) {
 	CallPointer(Message::AddRefDocument, 0, doc);
 }
 
-void ScintillaCall::ReleaseDocument(void *doc) {
+void ScintillaCall::ReleaseDocument(IDocumentEditable *doc) {
 	CallPointer(Message::ReleaseDocument, 0, doc);
 }
 
@@ -2363,8 +2431,16 @@ void ScintillaCall::SetSelectionMode(Scintilla::SelectionMode selectionMode) {
 	Call(Message::SetSelectionMode, static_cast<uintptr_t>(selectionMode));
 }
 
+void ScintillaCall::ChangeSelectionMode(Scintilla::SelectionMode selectionMode) {
+	Call(Message::ChangeSelectionMode, static_cast<uintptr_t>(selectionMode));
+}
+
 SelectionMode ScintillaCall::SelectionMode() {
 	return static_cast<Scintilla::SelectionMode>(Call(Message::GetSelectionMode));
+}
+
+void ScintillaCall::SetMoveExtendsSelection(bool moveExtendsSelection) {
+	Call(Message::SetMoveExtendsSelection, moveExtendsSelection);
 }
 
 bool ScintillaCall::MoveExtendsSelection() {
@@ -2643,6 +2719,10 @@ void ScintillaCall::CopyAllowLine() {
 	Call(Message::CopyAllowLine);
 }
 
+void ScintillaCall::CutAllowLine() {
+	Call(Message::CutAllowLine);
+}
+
 void *ScintillaCall::CharacterPointer() {
 	return reinterpret_cast<void *>(Call(Message::GetCharacterPointer));
 }
@@ -2877,6 +2957,10 @@ void ScintillaCall::SetSelection(Position caret, Position anchor) {
 
 void ScintillaCall::AddSelection(Position caret, Position anchor) {
 	Call(Message::AddSelection, caret, anchor);
+}
+
+int ScintillaCall::SelectionFromPoint(int x, int y) {
+	return static_cast<int>(Call(Message::SelectionFromPoint, x, y));
 }
 
 void ScintillaCall::DropSelectionN(int selection) {

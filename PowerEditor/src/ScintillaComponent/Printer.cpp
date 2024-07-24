@@ -17,9 +17,11 @@
 
 #include "Printer.h"
 #include "RunDlg.h"
-//#include "Parameters.h"
+#include "localization.h"
 
-void replaceStr(generic_string & str, generic_string str2BeReplaced, generic_string replacement)
+using namespace std;
+
+void replaceStr(wstring & str, wstring str2BeReplaced, wstring replacement)
 {
 	size_t pos = str.find(str2BeReplaced);
 
@@ -70,12 +72,12 @@ size_t Printer::doPrint(bool justDoIt)
 {
 	const NppGUI & nppGUI = (NppParameters::getInstance()).getNppGUI();
 
-	POINT ptPage;
-	POINT ptDpi;
+	POINT ptPage{};
+	POINT ptDpi{};
 
-	RECT rectMargins;
-	RECT rectPhysMargins;
-	RECT userMargins;
+	RECT rectMargins{};
+	RECT rectPhysMargins{};
+	RECT userMargins{};
 
 	// Get printer resolution
 	ptDpi.x = GetDeviceCaps(_pdlg.hDC, LOGPIXELSX);    // dpi in X direction
@@ -126,12 +128,12 @@ size_t Printer::doPrint(bool justDoIt)
 	// Convert page size to logical units and we're done!
 	DPtoLP(_pdlg.hDC, &ptPage, 1);
 
-	TEXTMETRIC tm;
+	TEXTMETRIC tm{};
 
 	int fontSize = nppGUI._printSettings._headerFontSize?nppGUI._printSettings._headerFontSize:9;
 	int fontWeight = (nppGUI._printSettings._headerFontStyle & FONTSTYLE_BOLD) ? FW_BOLD : FW_NORMAL;
 	int isFontItalic = (nppGUI._printSettings._headerFontStyle & FONTSTYLE_ITALIC) ? TRUE : FALSE;
-	const TCHAR *fontFace = (nppGUI._printSettings._headerFontName != TEXT(""))?nppGUI._printSettings._headerFontName.c_str():TEXT("Arial");
+	const wchar_t *fontFace = (nppGUI._printSettings._headerFontName != L"")?nppGUI._printSettings._headerFontName.c_str():L"Arial";
 
 	int headerLineHeight = ::MulDiv(fontSize, ptDpi.y, 72);
 
@@ -151,7 +153,7 @@ size_t Printer::doPrint(bool justDoIt)
 	fontSize = nppGUI._printSettings._footerFontSize?nppGUI._printSettings._footerFontSize:9;
 	fontWeight = (nppGUI._printSettings._footerFontStyle & FONTSTYLE_BOLD) ? FW_BOLD : FW_NORMAL;
 	isFontItalic = (nppGUI._printSettings._footerFontStyle & FONTSTYLE_ITALIC) ? TRUE : FALSE;
-	fontFace = (nppGUI._printSettings._footerFontName != TEXT(""))?nppGUI._printSettings._footerFontName.c_str():TEXT("Arial");
+	fontFace = (nppGUI._printSettings._footerFontName != L"")?nppGUI._printSettings._footerFontName.c_str():L"Arial";
 
 	int footerLineHeight = ::MulDiv(fontSize, ptDpi.y, 72);
 	HFONT fontFooter = ::CreateFont(footerLineHeight,
@@ -172,16 +174,21 @@ size_t Printer::doPrint(bool justDoIt)
 	int printMarge = tm.tmHeight + tm.tmExternalLeading;
 	printMarge = printMarge + printMarge / 2;
 
-	DOCINFO docInfo;
+	DOCINFO docInfo{};
 	docInfo.cbSize = sizeof(DOCINFO);
 	docInfo.fwType = 0;
 	docInfo.lpszDocName = _pSEView->getCurrentBuffer()->getFullPathName();
 	docInfo.lpszOutput = NULL;
 	docInfo.lpszDatatype = NULL;
 
-	if (::StartDoc(_pdlg.hDC, &docInfo) < 0) 
+	if (::StartDoc(_pdlg.hDC, &docInfo) < 0)
 	{
-		MessageBox(NULL, TEXT("Can not start printer document."), 0, MB_OK);
+		NativeLangSpeaker* pNativeSpeaker = NppParameters::getInstance().getNativeLangSpeaker();
+		pNativeSpeaker->messageBox("PrintError",
+			nullptr,
+			L"Cannot start printer document.",
+			L"",
+			MB_OK);
 		return 0;
 	}
 	
@@ -205,13 +212,11 @@ size_t Printer::doPrint(bool justDoIt)
 			lengthDoc = _endPos;
 		}
 
-		if (lengthPrinted < 0)
-			lengthPrinted = 0;
 		if (lengthDoc > lengthDocMax)
 			lengthDoc = lengthDocMax;
 	}
 
-	NPP_RangeToFormat frPrint;
+	NPP_RangeToFormat frPrint{};
 	frPrint.hdc = _pdlg.hDC;
 	frPrint.hdcTarget = _pdlg.hDC;
 	frPrint.rc.left = rectMargins.left - rectPhysMargins.left;
@@ -229,24 +234,24 @@ size_t Printer::doPrint(bool justDoIt)
 	frPrint.rc.right -= printMarge;
 
 	const int headerSize = 256;
-	TCHAR headerL[headerSize] = TEXT("");
-	TCHAR headerM[headerSize] = TEXT("");
-	TCHAR headerR[headerSize] = TEXT("");
-	TCHAR footerL[headerSize] = TEXT("");
-	TCHAR footerM[headerSize] = TEXT("");
-	TCHAR footerR[headerSize] = TEXT("");
+	wchar_t headerL[headerSize] = L"";
+	wchar_t headerM[headerSize] = L"";
+	wchar_t headerR[headerSize] = L"";
+	wchar_t footerL[headerSize] = L"";
+	wchar_t footerM[headerSize] = L"";
+	wchar_t footerR[headerSize] = L"";
 	
 
-	const TCHAR shortDateVar[] = TEXT("$(SHORT_DATE)");
-	const TCHAR longDateVar[] = TEXT("$(LONG_DATE)");
-	const TCHAR timeVar[] = TEXT("$(TIME)");
+	const wchar_t shortDateVar[] = L"$(SHORT_DATE)";
+	const wchar_t longDateVar[] = L"$(LONG_DATE)";
+	const wchar_t timeVar[] = L"$(TIME)";
 
 	const int bufferSize = 64;
-	TCHAR shortDate[bufferSize];
-	TCHAR longDate[bufferSize];
-	TCHAR time[bufferSize];
+	wchar_t shortDate[bufferSize];
+	wchar_t longDate[bufferSize];
+	wchar_t time[bufferSize];
 
-	SYSTEMTIME st;
+	SYSTEMTIME st{};
 	::GetLocalTime(&st);
 	::GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, shortDate, bufferSize);
 	::GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, &st, NULL, longDate, bufferSize);
@@ -256,8 +261,8 @@ size_t Printer::doPrint(bool justDoIt)
 	{
 		frPrint.rc.top += headerLineHeight + headerLineHeight / 2;
 
-		generic_string headerLeftPart = nppGUI._printSettings._headerLeft;
-		if (headerLeftPart != TEXT(""))
+		wstring headerLeftPart = nppGUI._printSettings._headerLeft;
+		if (headerLeftPart != L"")
 		{
 			replaceStr(headerLeftPart, shortDateVar, shortDate);
 			replaceStr(headerLeftPart, longDateVar, longDate);
@@ -265,8 +270,8 @@ size_t Printer::doPrint(bool justDoIt)
 			expandNppEnvironmentStrs(headerLeftPart.c_str(), headerL, headerSize, _pdlg.hwndOwner);
 		}
 
-		generic_string headerMiddlePart = nppGUI._printSettings._headerMiddle;
-		if (headerMiddlePart != TEXT(""))
+		wstring headerMiddlePart = nppGUI._printSettings._headerMiddle;
+		if (headerMiddlePart != L"")
 		{
 			replaceStr(headerMiddlePart, shortDateVar, shortDate);
 			replaceStr(headerMiddlePart, longDateVar, longDate);
@@ -274,8 +279,8 @@ size_t Printer::doPrint(bool justDoIt)
 			expandNppEnvironmentStrs(headerMiddlePart.c_str(), headerM, headerSize, _pdlg.hwndOwner);
 		}
 
-		generic_string headerRightPart = nppGUI._printSettings._headerRight;
-		if (headerRightPart != TEXT(""))
+		wstring headerRightPart = nppGUI._printSettings._headerRight;
+		if (headerRightPart != L"")
 		{
 			replaceStr(headerRightPart, shortDateVar, shortDate);
 			replaceStr(headerRightPart, longDateVar, longDate);
@@ -289,8 +294,8 @@ size_t Printer::doPrint(bool justDoIt)
 	{
 		frPrint.rc.bottom -= footerLineHeight + footerLineHeight / 2;
 
-		generic_string footerLeftPart = nppGUI._printSettings._footerLeft;
-		if (footerLeftPart != TEXT(""))
+		wstring footerLeftPart = nppGUI._printSettings._footerLeft;
+		if (footerLeftPart != L"")
 		{
 			replaceStr(footerLeftPart, shortDateVar, shortDate);
 			replaceStr(footerLeftPart, longDateVar, longDate);
@@ -298,8 +303,8 @@ size_t Printer::doPrint(bool justDoIt)
 			expandNppEnvironmentStrs(footerLeftPart.c_str(), footerL, headerSize, _pdlg.hwndOwner);
 		}
 
-		generic_string footerMiddlePart = nppGUI._printSettings._footerMiddle;
-		if (footerMiddlePart != TEXT(""))
+		wstring footerMiddlePart = nppGUI._printSettings._footerMiddle;
+		if (footerMiddlePart != L"")
 		{
 			replaceStr(footerMiddlePart, shortDateVar, shortDate);
 			replaceStr(footerMiddlePart, longDateVar, longDate);
@@ -307,8 +312,8 @@ size_t Printer::doPrint(bool justDoIt)
 			expandNppEnvironmentStrs(footerMiddlePart.c_str(), footerM, headerSize, _pdlg.hwndOwner);
 		}
 
-		generic_string footerRightPart = nppGUI._printSettings._footerRight;
-		if (footerRightPart != TEXT(""))
+		wstring footerRightPart = nppGUI._printSettings._footerRight;
+		if (footerRightPart != L"")
 		{
 			replaceStr(footerRightPart, shortDateVar, shortDate);
 			replaceStr(footerRightPart, longDateVar, longDate);
@@ -323,7 +328,7 @@ size_t Printer::doPrint(bool justDoIt)
 		_pSEView->showMargin(ScintillaEditView::_SC_MARGE_LINENUMBER, false);
 
 	int pageNum = 1;
-	const TCHAR pageVar[] = TEXT("$(CURRENT_PRINTING_PAGE)");
+	const wchar_t pageVar[] = L"$(CURRENT_PRINTING_PAGE)";
 
 	_pSEView->execute(SCI_SETPRINTCOLOURMODE, nppGUI._printSettings._printOption); // setting mode once is enough
 	while (lengthPrinted < lengthDoc) 
@@ -334,8 +339,8 @@ size_t Printer::doPrint(bool justDoIt)
 		if (!justDoIt)
 			printPage = false;
 
-		TCHAR pageString[32];
-		wsprintf(pageString, TEXT("%0d"), pageNum);
+		wchar_t pageString[32]{};
+		wsprintf(pageString, L"%0d", pageNum);
 		
 		if (printPage) 
 		{
@@ -354,12 +359,12 @@ size_t Printer::doPrint(bool justDoIt)
 				rcw.bottom = rcw.top + headerLineHeight;
 
 
-				SIZE size;
+				SIZE size{};
 				
 				// Left part
 				if (headerL[0] != '\0')
 				{
-					generic_string headerLeft(headerL);
+					wstring headerLeft(headerL);
 					size_t pos = headerLeft.find(pageVar);
 
 					if (pos != headerLeft.npos)
@@ -372,7 +377,7 @@ size_t Printer::doPrint(bool justDoIt)
 				// Middle part
 				if (headerM[0] != '\0')
 				{
-					generic_string headerMiddle(headerM);
+					wstring headerMiddle(headerM);
 					size_t pos = headerMiddle.find(pageVar);
 					if (pos != headerMiddle.npos)
 						headerMiddle.replace(pos, lstrlen(pageVar), pageString);
@@ -384,7 +389,7 @@ size_t Printer::doPrint(bool justDoIt)
 				// Right part
 				if (headerR[0] != '\0')
 				{
-					generic_string headerRight(headerR);
+					wstring headerRight(headerR);
 					size_t pos = headerRight.find(pageVar);
 					if (pos != headerRight.npos)
 						headerRight.replace(pos, lstrlen(pageVar), pageString);
@@ -421,12 +426,12 @@ size_t Printer::doPrint(bool justDoIt)
 				RECT rcw = {frPrint.rc.left, frPrint.rc.bottom + footerLineHeight / 2,
 					        frPrint.rc.right, frPrint.rc.bottom + footerLineHeight + footerLineHeight / 2};
 
-				SIZE size;
+				SIZE size{};
 				
 				// Left part
 				if (footerL[0] != '\0')
 				{
-					generic_string footerLeft(footerL);
+					wstring footerLeft(footerL);
 					size_t pos = footerLeft.find(pageVar);
 					if (pos != footerLeft.npos)
 						footerLeft.replace(pos, lstrlen(pageVar), pageString);
@@ -438,7 +443,7 @@ size_t Printer::doPrint(bool justDoIt)
 				// Middle part
 				if (footerM[0] != '\0')
 				{
-					generic_string footerMiddle(footerM);
+					wstring footerMiddle(footerM);
 					size_t pos = footerMiddle.find(pageVar);
 					if (pos != footerMiddle.npos)
 						footerMiddle.replace(pos, lstrlen(pageVar), pageString);
@@ -450,7 +455,7 @@ size_t Printer::doPrint(bool justDoIt)
 				// Right part
 				if (footerR[0] != '\0')
 				{
-					generic_string footerRight(footerR);
+					wstring footerRight(footerR);
 					size_t pos = footerRight.find(pageVar);
 					if (pos != footerRight.npos)
 						footerRight.replace(pos, lstrlen(pageVar), pageString);
@@ -491,7 +496,7 @@ size_t Printer::doPrint(bool justDoIt)
 	if (fontFooter)
 		::DeleteObject(fontFooter);
 
-	return (pageNum - 1);
+	return (static_cast<size_t>(pageNum) - 1);
 }
 
 

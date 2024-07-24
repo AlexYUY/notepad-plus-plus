@@ -27,6 +27,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include "Window.h"
+#include "dpiManagerV2.h"
 
 //Notification message
 #define TCN_TABDROPPED (TCN_FIRST - 10)
@@ -41,15 +42,23 @@
 const int marge = 8;
 const int nbCtrlMax = 10;
 
-const TCHAR TABBAR_ACTIVEFOCUSEDINDCATOR[64] = TEXT("Active tab focused indicator");
-const TCHAR TABBAR_ACTIVEUNFOCUSEDINDCATOR[64] = TEXT("Active tab unfocused indicator");
-const TCHAR TABBAR_ACTIVETEXT[64] = TEXT("Active tab text");
-const TCHAR TABBAR_INACTIVETEXT[64] = TEXT("Inactive tabs");
+const wchar_t TABBAR_ACTIVEFOCUSEDINDCATOR[64] = L"Active tab focused indicator";
+const wchar_t TABBAR_ACTIVEUNFOCUSEDINDCATOR[64] = L"Active tab unfocused indicator";
+const wchar_t TABBAR_ACTIVETEXT[64] = L"Active tab text";
+const wchar_t TABBAR_INACTIVETEXT[64] = L"Inactive tabs";
+
+constexpr int g_TabIconSize = 16;
+constexpr int g_TabHeight = 22;
+constexpr int g_TabHeightLarge = 25;
+constexpr int g_TabWidth = 45;
+constexpr int g_TabWidthCloseBtn = 60;
+constexpr int g_TabCloseBtnSize = 11;
+constexpr int g_TabCloseBtnSize_DM = 16;
 
 struct TBHDR
 {
-	NMHDR _hdr;
-	int _tabOrigin;
+	NMHDR _hdr{};
+	int _tabOrigin = 0;
 };
 
 
@@ -59,12 +68,12 @@ class TabBar : public Window
 public:
 	TabBar() = default;
 	virtual ~TabBar() = default;
-	virtual void destroy();
+	void destroy() override;
 	virtual void init(HINSTANCE hInst, HWND hwnd, bool isVertical = false, bool isMultiLine = false);
-	virtual void reSizeTo(RECT & rc2Ajust);
-	int insertAtEnd(const TCHAR *subTabName);
+	void reSizeTo(RECT& rc2Ajust) override;
+	int insertAtEnd(const wchar_t *subTabName);
 	void activateAt(int index) const;
-	void getCurrentTitle(TCHAR *title, int titleLen);
+	void getCurrentTitle(wchar_t *title, int titleLen);
 
 	int32_t getCurrentTabIndex() const {
 		return static_cast<int32_t>(SendMessage(_hSelf, TCM_GETCURSEL, 0, 0));
@@ -87,7 +96,7 @@ public:
         return _nbItem;
     }
 
-	void setFont(const TCHAR *fontName, int fontSize);
+	void setFont();
 
 	void setVertical(bool b) {
 		_isVertical = b;
@@ -97,10 +106,18 @@ public:
 		_isMultiLine = b;
 	};
 
+	HFONT& getFont(bool isReduced = true) {
+		return isReduced ? _hFont : _hLargeFont;
+	}
+
+	int getNextOrPrevTabIdx(bool isNext) const;
+
+	DPIManagerV2& dpiManager() { return _dpiManager; };
 
 protected:
 	size_t _nbItem = 0;
 	bool _hasImgLst = false;
+
 	HFONT _hFont = nullptr;
 	HFONT _hLargeFont = nullptr;
 	HFONT _hVerticalFont = nullptr;
@@ -111,6 +128,8 @@ protected:
 	bool _isVertical = false;
 	bool _isMultiLine = false;
 
+	DPIManagerV2 _dpiManager;
+
 	long getRowCount() const {
 		return long(::SendMessage(_hSelf, TCM_GETROWCOUNT, 0, 0));
 	}
@@ -119,10 +138,11 @@ protected:
 
 struct CloseButtonZone
 {
-	CloseButtonZone();
 	bool isHit(int x, int y, const RECT & tabRect, bool isVertical) const;
 	RECT getButtonRectFrom(const RECT & tabRect, bool isVertical) const;
+	void setParent(HWND parent) { _parent = parent; }
 
+	HWND _parent = nullptr;
 	int _width = 0;
 	int _height = 0;
 };
@@ -141,20 +161,12 @@ public :
         _doDragNDrop = justDoIt;
     };
 
-	virtual void init(HINSTANCE hInst, HWND hwnd, bool isVertical = false, bool isMultiLine = false);
+	void init(HINSTANCE hInst, HWND hwnd, bool isVertical = false, bool isMultiLine = false) override;
 
-	virtual void destroy();
+	void destroy() override;
 
     static bool doDragNDropOrNot() {
         return _doDragNDrop;
-    };
-
-	int getSrcTabIndex() const {
-        return _nSrcTab;
-    };
-
-    int getTabDraggedIndex() const {
-        return _nTabDragged;
     };
 
 	POINT getDraggingPoint() const {
@@ -166,30 +178,30 @@ public :
 		_draggingPoint.y = 0;
 	};
 
-	static void doOwnerDrawTab();
+	static void doOwnerDrawTab(TabBarPlus* tbpObj);
 	static void doVertical();
 	static void doMultiLine();
-	static bool isOwnerDrawTab() {return true;};
 	static bool drawTopBar() {return _drawTopBar;};
 	static bool drawInactiveTab() {return _drawInactiveTab;};
 	static bool drawTabCloseButton() {return _drawTabCloseButton;};
 	static bool isDbClk2Close() {return _isDbClk2Close;};
 	static bool isVertical() { return _isCtrlVertical;};
 	static bool isMultiLine() { return _isCtrlMultiLine;};
+	static bool isReduced() { return _isReduced;};
 
-	static void setDrawTopBar(bool b) {
+	static void setDrawTopBar(bool b, TabBarPlus* tbpObj) {
 		_drawTopBar = b;
-		doOwnerDrawTab();
+		doOwnerDrawTab(tbpObj);
 	}
 
-	static void setDrawInactiveTab(bool b) {
+	static void setDrawInactiveTab(bool b, TabBarPlus* tbpObj) {
 		_drawInactiveTab = b;
-		doOwnerDrawTab();
+		doOwnerDrawTab(tbpObj);
 	}
 
-	static void setDrawTabCloseButton(bool b) {
+	static void setDrawTabCloseButton(bool b, TabBarPlus* tbpObj) {
 		_drawTabCloseButton = b;
-		doOwnerDrawTab();
+		doOwnerDrawTab(tbpObj);
 	}
 
 	static void setDbClk2Close(bool b) {
@@ -206,9 +218,17 @@ public :
 		doMultiLine();
 	}
 
-	static void setColour(COLORREF colour2Set, tabColourIndex i);
+	static void setReduced(bool b) {
+		_isReduced = b;
+	}
 
+	static void setColour(COLORREF colour2Set, tabColourIndex i, TabBarPlus* tbpObj);
 	virtual int getIndividualTabColour(int tabIndex) = 0;
+
+	void currentTabToStart();
+	void currentTabToEnd();
+
+	void setCloseBtnImageList();
 
 protected:
     // it's the boss to decide if we do the drag N drop
@@ -221,13 +241,14 @@ protected:
     int _nSrcTab = -1;
 	int _nTabDragged = -1;
 	int _previousTabSwapped = -1;
-	POINT _draggingPoint = {}; // coordinate of Screen
+	POINT _draggingPoint{}; // coordinate of Screen
 	WNDPROC _tabBarDefaultProc = nullptr;
 
-	RECT _currentHoverTabRect;
+	RECT _currentHoverTabRect{};
 	int _currentHoverTabItem = -1; // -1 : no mouse on any tab
 
 	CloseButtonZone _closeButtonZone;
+	HIMAGELIST _hCloseBtnImgLst = nullptr;
 	bool _isCloseHover = false;
 	int _whichCloseClickDown = -1;
 	bool _lmbdHit = false; // Left Mouse Button Down Hit
@@ -250,6 +271,7 @@ protected:
 	static bool _isDbClk2Close;
 	static bool _isCtrlVertical;
 	static bool _isCtrlMultiLine;
+	static bool _isReduced;
 
 	static COLORREF _activeTextColour;
 	static COLORREF _activeTopBarFocusedColour;
@@ -270,7 +292,7 @@ protected:
 
 	int32_t getTabIndexAt(int x, int y)
 	{
-		TCHITTESTINFO hitInfo;
+		TCHITTESTINFO hitInfo{};
 		hitInfo.pt.x = x;
 		hitInfo.pt.y = y;
 		return static_cast<int32_t>(::SendMessage(_hSelf, TCM_HITTEST, 0, reinterpret_cast<LPARAM>(&hitInfo)));
@@ -278,7 +300,7 @@ protected:
 
 	bool isPointInParentZone(POINT screenPoint) const
 	{
-        RECT parentZone;
+		RECT parentZone{};
         ::GetWindowRect(_hParent, &parentZone);
 	    return (((screenPoint.x >= parentZone.left) && (screenPoint.x <= parentZone.right)) &&
 			    (screenPoint.y >= parentZone.top) && (screenPoint.y <= parentZone.bottom));

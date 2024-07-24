@@ -402,6 +402,7 @@ void ScintillaGTK::MapThis() {
 		wMain.SetCursor(Window::Cursor::arrow);
 		scrollbarv.SetCursor(Window::Cursor::arrow);
 		scrollbarh.SetCursor(Window::Cursor::arrow);
+		SetClientRectangle();
 		ChangeSize();
 		gdk_window_show(PWindow(wMain));
 	} catch (...) {
@@ -540,7 +541,7 @@ gint ScintillaGTK::FocusOut(GtkWidget *widget, GdkEventFocus * /*event*/) {
 }
 
 void ScintillaGTK::SizeRequest(GtkWidget *widget, GtkRequisition *requisition) {
-	ScintillaGTK *sciThis = FromWidget(widget);
+	const ScintillaGTK *sciThis = FromWidget(widget);
 	requisition->width = 1;
 	requisition->height = 1;
 	GtkRequisition child_requisition;
@@ -672,6 +673,7 @@ void ScintillaGTK::Init() {
 
 	/* create pre-edit window */
 	wPreedit = gtk_window_new(GTK_WINDOW_POPUP);
+	gtk_window_set_type_hint(GTK_WINDOW(PWidget(wPreedit)), GDK_WINDOW_TYPE_HINT_POPUP_MENU);
 	wPreeditDraw = gtk_drawing_area_new();
 	GtkWidget *predrw = PWidget(wPreeditDraw);      // No code inside the G_OBJECT macro
 #if GTK_CHECK_VERSION(3,0,0)
@@ -702,10 +704,11 @@ void ScintillaGTK::Init() {
 		timers[tr].reason = static_cast<TickReason>(tr);
 		timers[tr].scintilla = this;
 	}
-	vs.indicators[SC_INDICATOR_UNKNOWN] = Indicator(IndicatorStyle::Hidden, ColourRGBA(0, 0, 0xff));
-	vs.indicators[SC_INDICATOR_INPUT] = Indicator(IndicatorStyle::Dots, ColourRGBA(0, 0, 0xff));
-	vs.indicators[SC_INDICATOR_CONVERTED] = Indicator(IndicatorStyle::CompositionThick, ColourRGBA(0, 0, 0xff));
-	vs.indicators[SC_INDICATOR_TARGET] = Indicator(IndicatorStyle::StraightBox, ColourRGBA(0, 0, 0xff));
+
+	vs.indicators[SC_INDICATOR_UNKNOWN] = Indicator(IndicatorStyle::Hidden, colourIME);
+	vs.indicators[SC_INDICATOR_INPUT] = Indicator(IndicatorStyle::Dots, colourIME);
+	vs.indicators[SC_INDICATOR_CONVERTED] = Indicator(IndicatorStyle::CompositionThick, colourIME);
+	vs.indicators[SC_INDICATOR_TARGET] = Indicator(IndicatorStyle::StraightBox, colourIME);
 
 	fontOptionsPrevious = FontOptions(PWidget(wText));
 }
@@ -1061,8 +1064,12 @@ void ScintillaGTK::FullPaint() {
 	wText.InvalidateAll();
 }
 
+void ScintillaGTK::SetClientRectangle() {
+	rectangleClient = wMain.GetClientPosition();
+}
+
 PRectangle ScintillaGTK::GetClientRectangle() const {
-	PRectangle rc = wMain.GetClientPosition();
+	PRectangle rc = rectangleClient;
 	if (verticalScrollBarVisible)
 		rc.right -= verticalScrollBarWidth;
 	if (horizontalScrollBarVisible && !Wrapping())
@@ -1163,7 +1170,7 @@ void ScintillaGTK::SetScrollBars() {
 	// On GTK, unlike other platforms, modifying scrollbars inside some events including
 	// resizes causes problems. Deferring the modification to a lower priority (125) idle
 	// event avoids the problems. This code did not always work when the priority was
-	// higher than GTK's resize (GTK_PRIORITY_RESIZE=110) or redraw 
+	// higher than GTK's resize (GTK_PRIORITY_RESIZE=110) or redraw
 	// (GDK_PRIORITY_REDRAW=120) idle tasks.
 	scrollBarIdleID = gdk_threads_add_idle_full(priorityScrollBar,
 		[](gpointer pSci) -> gboolean {
@@ -1401,6 +1408,7 @@ void ScintillaGTK::Paste() {
 void ScintillaGTK::CreateCallTipWindow(PRectangle rc) {
 	if (!ct.wCallTip.Created()) {
 		ct.wCallTip = gtk_window_new(GTK_WINDOW_POPUP);
+		gtk_window_set_type_hint(GTK_WINDOW(PWidget(ct.wCallTip)), GDK_WINDOW_TYPE_HINT_TOOLTIP);
 		ct.wDraw = gtk_drawing_area_new();
 		GtkWidget *widcdrw = PWidget(ct.wDraw);	//	// No code inside the G_OBJECT macro
 		gtk_container_add(GTK_CONTAINER(PWidget(ct.wCallTip)), widcdrw);
@@ -1788,6 +1796,7 @@ void ScintillaGTK::Resize(int width, int height) {
 		gtk_widget_hide(GTK_WIDGET(PWidget(scrollbarv)));
 		verticalScrollBarWidth = 0;
 	}
+	SetClientRectangle();
 	if (IS_WIDGET_MAPPED(PWidget(wMain))) {
 		ChangeSize();
 	} else {

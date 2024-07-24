@@ -40,6 +40,7 @@
 #endif
 
 #include <windows.h>
+#include <string>
 #include <vector>
 #include <list>
 
@@ -71,7 +72,7 @@ namespace ReadDirectoryChangesPrivate
 /// </para>
 /// <example><code>
 /// 	CReadDirectoryChanges changes;
-/// 	changes.AddDirectory(_T("C:\\"), false, dwNotificationFlags);
+/// 	changes.AddDirectory(L"C:\\", false, dwNotificationFlags);
 ///
 ///		const HANDLE handles[] = { hStopEvent, changes.GetWaitHandle() };
 ///

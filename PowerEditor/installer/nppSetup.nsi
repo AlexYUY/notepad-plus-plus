@@ -43,6 +43,10 @@ OutFile ".\build\npp.${APPVERSION}.Installer.arm64.exe"
 OutFile ".\build\npp.${APPVERSION}.Installer.exe"
 !endif
 
+; Sign both installer and uninstaller
+!finalize        'sign-installers.bat "%1"' = 0     ; %1 is replaced by the installer exe to be signed.
+!uninstfinalize  'sign-installers.bat "%1"' = 0     ; %1 is replaced by the uninstaller exe to be signed.
+
 ; ------------------------------------------------------------------------
 ; Version Information
    VIProductVersion	"${Version}"
@@ -86,6 +90,7 @@ page Custom ExtraOptions
 !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchNpp"
 !insertmacro MUI_PAGE_FINISH
 
+
 !insertmacro MUI_UNPAGE_CONFIRM
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW "un.CheckIfRunning"
 !insertmacro MUI_UNPAGE_INSTFILES
@@ -110,6 +115,8 @@ InstType "Minimalist"
 
 Var diffArchDir2Remove
 Var noUpdater
+Var closeRunningNpp
+Var runNppAfterSilentInstall
 
 !ifdef ARCH64 || ARCHARM64
 ; this is needed for the 64-bit InstallDirRegKey patch
@@ -126,7 +133,7 @@ Function .onInit
 	;   so the InstallDirRegKey checks for the irrelevant HKLM\SOFTWARE\WOW6432Node\Notepad++, explanation:
 	;   https://nsis.sourceforge.io/Reference/SetRegView
 	;
-!ifdef ARCH64 || ARCHARM64
+!ifdef ARCH64 || ARCHARM64	
 	${If} ${RunningX64}
 		System::Call kernel32::GetCommandLine()t.r0 ; get the original cmdline (where a possible "/D=..." is not hidden from us by NSIS)
 		${StrStr} $1 $0 "/D="
@@ -145,6 +152,36 @@ Function .onInit
 	;
 	; --- PATCH END ---
 
+
+	; Begin of "/closeRunningNpp"
+	${GetParameters} $R0 
+	${GetOptions} $R0 "/closeRunningNpp" $R1 ; case insensitive 
+	IfErrors 0 closeRunningNppYes
+	StrCpy $closeRunningNpp "false"
+	Goto closeRunningNppCheckDone
+closeRunningNppYes:
+	StrCpy $closeRunningNpp "true"
+closeRunningNppCheckDone:
+	${If} $closeRunningNpp == "true"
+		; First try to use the usual app-closing by sending the WM_CLOSE.
+		; If that closing fails, use the forceful TerminateProcess way.
+		!insertmacro FindAndCloseOrTerminateRunningNpp ; this has to precede the following silent mode Notepad++ instance mutex check
+	${EndIf}
+
+	; handle the possible Silent Mode (/S) & already running Notepad++ (without this an incorrect partial installation is possible)
+	IfSilent 0 notInSilentMode
+	System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "nppInstance") i .R0'
+	IntCmp $R0 0 nppNotRunning
+	System::Call 'kernel32::CloseHandle(i $R0)' ; a Notepad++ instance is running, tidy-up the opened mutex handle only
+	SetErrorLevel 5 ; set an exit code > 0 otherwise the installer returns 0 aka SUCCESS ('5' means here the future ERROR_ACCESS_DENIED when trying to overwrite the notepad++.exe file...)
+	Quit ; silent installation is silent, currently we cannot continue without a user interaction (TODO: a new "/closeRunningNppAutomatically" installer optional param...)
+nppNotRunning:
+notInSilentMode:
+	; End of "/closeRunningNpp"
+	
+	
+
+	; Begin of "/noUpdater"
 	${GetParameters} $R0 
 	${GetOptions} $R0 "/noUpdater" $R1 ;case insensitive 
 	IfErrors withUpdater withoutUpdater
@@ -161,7 +198,21 @@ updaterDone:
 		!insertmacro UnSelectSection ${PluginsAdmin}
 		SectionSetText ${PluginsAdmin} ""
 	${EndIf}
+	; End of "/noUpdater"
 
+
+	; Begin of "/runNppAfterSilentInstall"
+	${GetParameters} $R0 
+	${GetOptions} $R0 "/runNppAfterSilentInstall" $R1 ;case insensitive 
+	IfErrors noRunNpp runNpp
+noRunNpp:
+	StrCpy $runNppAfterSilentInstall "false"
+	Goto runNppDone
+runNpp:
+	StrCpy $runNppAfterSilentInstall "true"
+runNppDone:
+	; End of "/runNppAfterSilentInstall"
+	
 
 	${If} ${SectionIsSelected} ${PluginsAdmin}
 		!insertmacro SetSectionFlag ${AutoUpdater} ${SF_RO}
@@ -261,60 +312,38 @@ FunctionEnd
 
 !include "nsisInclude\themes.nsh"
 
-!include "StrFunc.nsh"
-${Using:StrFunc} StrStr
-
-Var muiVerbStr
-Var nppSubStrRes
-Var editWithNppLocalStr
 
 ${MementoSection} "Context Menu Entry" explorerContextMenu
 
-	${If} $WinVer == "11"
-		ReadRegStr $muiVerbStr HKLM "SOFTWARE\Classes\*\shell\pintohome" MUIVerb
-		
-		${StrStr} $nppSubStrRes $muiVerbStr "Notepad++"
-		;MessageBox MB_OK "entry value: $muiVerbStr"
-		;MessageBox MB_OK "result: $nppSubStrRes"
-		
-		; Make sure there's no entry before creating it, so we won't override other application if present 
-		${If} $muiVerbStr == ""
-			${OrIf} $nppSubStrRes != ""  ; it contains "Notepad++"
-			
-			ReadINIStr $editWithNppLocalStr "$PLUGINSDIR\nppLocalization\explorerContextMenuEntryLocal.ini" $(langFileName) "Edit_with_Notepad++"
-			${If} $editWithNppLocalStr == ""
-				StrCpy $editWithNppLocalStr "Edit with Notepad++"
-				MessageBox MB_OK "translation: $editWithNppLocalStr"
-			${EndIf}
-			
-			WriteRegStr HKLM "SOFTWARE\Classes\*\shell\pintohome" 'MUIVerb' $editWithNppLocalStr
-			WriteRegStr HKLM "SOFTWARE\Classes\*\shell\pintohome\command" "" '"$INSTDIR\notepad++.exe" "%1"'
-		
-		${EndIf}
-
-	${EndIf}
-
 	SetOverwrite try
-	SetOutPath "$INSTDIR\"
+	SetOutPath "$INSTDIR\contextMenu\"
 	
-	; There is no need to keep x86 NppShell_06.dll in 64 bit installer
-	; But in 32bit installer both the Dlls are required
-	; As user can install 32bit npp version on x64 bit machine, that time x64 bit NppShell is required.
-	
-	!ifdef ARCH64
-		File /oname=$INSTDIR\NppShell_06.dll "..\bin\NppShell64_06.dll"
-	!else ifdef ARCHARM64
-		File /oname=$INSTDIR\NppShell_06.dll "..\binarm64\NppShell64.dll"
-	!else
-		${If} ${RunningX64}
-			File /oname=$INSTDIR\NppShell_06.dll "..\bin\NppShell64_06.dll"
-		${Else}
-			File "..\bin\NppShell_06.dll"
-		${EndIf}
-	!endif
-	Exec 'regsvr32 /s "$INSTDIR\NppShell_06.dll"'
 
+	IfFileExists $INSTDIR\contextmenu\NppShell.dll 0 +2
+		ExecWait 'rundll32.exe "$INSTDIR\contextmenu\NppShell.dll",CleanupDll'
+
+
+	!ifdef ARCH64
+		File /oname=$INSTDIR\contextMenu\NppShell.msix "..\bin64\NppShell.msix"
+		File /oname=$INSTDIR\contextMenu\NppShell.dll "..\bin64\NppShell.x64.dll"
+	!else ifdef ARCHARM64
+		File /oname=$INSTDIR\contextMenu\NppShell.msix "..\binarm64\NppShell.msix"
+		File /oname=$INSTDIR\contextMenu\NppShell.dll "..\binarm64\NppShell.arm64.dll"
+	!else
+		; We need to test which arch we are running on, since 32bit exe can be run on both 32bit and 64bit Windows.
+		${If} ${RunningX64}
+			; We are running on 64bit Windows, so we need the msix as well, since it might be Windows 11.
+			File /oname=$INSTDIR\contextMenu\NppShell.msix "..\bin64\NppShell.msix"
+			File /oname=$INSTDIR\contextMenu\NppShell.dll "..\bin64\NppShell.x64.dll"
+		${Else}
+			; We are running on 32bit Windows, so no need for the msix file, since there is no way this could even be upgraded to Windows 11.
+			File /oname=$INSTDIR\contextMenu\NppShell.dll "..\bin\NppShell.x86.dll"
+		${EndIf}    
+
+	!endif
 	
+	ExecWait 'regsvr32 /s "$INSTDIR\contextMenu\NppShell.dll"'
+
 ${MementoSectionEnd}
 
 ${MementoSectionDone}
@@ -349,8 +378,13 @@ FunctionEnd
 
 Section -FinishSection
   Call writeInstallInfoInRegistry
+  IfSilent 0 theEnd
+  	${If} $runNppAfterSilentInstall == "true"
+		Call LaunchNpp
+	${EndIf}
+theEnd:
 SectionEnd
 
-BrandingText "Software is like sex: It's better when it's free"
+BrandingText "The best things in life are free. Notepad++ is free so Notepad++ is the best"
 
 ; eof

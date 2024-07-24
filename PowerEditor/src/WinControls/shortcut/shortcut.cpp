@@ -28,139 +28,152 @@
 using namespace std;
 
 struct KeyIDNAME {
-	const TCHAR * name = nullptr;
+	const char * name = nullptr;
 	UCHAR id = 0;
 };
 
 KeyIDNAME namedKeyArray[] = {
-{TEXT("None"), VK_NULL},
+{"None", VK_NULL},
 
-{TEXT("Backspace"), VK_BACK},
-{TEXT("Tab"), VK_TAB},
-{TEXT("Enter"), VK_RETURN},
-{TEXT("Esc"), VK_ESCAPE},
-{TEXT("Spacebar"), VK_SPACE},
+{"Backspace", VK_BACK},
+{"Tab", VK_TAB},
+{"Enter", VK_RETURN},
+{"Esc", VK_ESCAPE},
+{"Spacebar", VK_SPACE},
 
-{TEXT("Page up"), VK_PRIOR},
-{TEXT("Page down"), VK_NEXT},
-{TEXT("End"), VK_END},
-{TEXT("Home"), VK_HOME},
-{TEXT("Left"), VK_LEFT},
-{TEXT("Up"), VK_UP},
-{TEXT("Right"), VK_RIGHT},
-{TEXT("Down"), VK_DOWN},
+{"Page up", VK_PRIOR},
+{"Page down", VK_NEXT},
+{"End", VK_END},
+{"Home", VK_HOME},
+{"Left", VK_LEFT},
+{"Up", VK_UP},
+{"Right", VK_RIGHT},
+{"Down", VK_DOWN},
 
-{TEXT("INS"), VK_INSERT},
-{TEXT("DEL"), VK_DELETE},
+{"INS", VK_INSERT},
+{"DEL", VK_DELETE},
 
-{TEXT("0"), VK_0},
-{TEXT("1"), VK_1},
-{TEXT("2"), VK_2},
-{TEXT("3"), VK_3},
-{TEXT("4"), VK_4},
-{TEXT("5"), VK_5},
-{TEXT("6"), VK_6},
-{TEXT("7"), VK_7},
-{TEXT("8"), VK_8},
-{TEXT("9"), VK_9},
-{TEXT("A"), VK_A},
-{TEXT("B"), VK_B},
-{TEXT("C"), VK_C},
-{TEXT("D"), VK_D},
-{TEXT("E"), VK_E},
-{TEXT("F"), VK_F},
-{TEXT("G"), VK_G},
-{TEXT("H"), VK_H},
-{TEXT("I"), VK_I},
-{TEXT("J"), VK_J},
-{TEXT("K"), VK_K},
-{TEXT("L"), VK_L},
-{TEXT("M"), VK_M},
-{TEXT("N"), VK_N},
-{TEXT("O"), VK_O},
-{TEXT("P"), VK_P},
-{TEXT("Q"), VK_Q},
-{TEXT("R"), VK_R},
-{TEXT("S"), VK_S},
-{TEXT("T"), VK_T},
-{TEXT("U"), VK_U},
-{TEXT("V"), VK_V},
-{TEXT("W"), VK_W},
-{TEXT("X"), VK_X},
-{TEXT("Y"), VK_Y},
-{TEXT("Z"), VK_Z},
+{"0", VK_0},
+{"1", VK_1},
+{"2", VK_2},
+{"3", VK_3},
+{"4", VK_4},
+{"5", VK_5},
+{"6", VK_6},
+{"7", VK_7},
+{"8", VK_8},
+{"9", VK_9},
+{"A", VK_A},
+{"B", VK_B},
+{"C", VK_C},
+{"D", VK_D},
+{"E", VK_E},
+{"F", VK_F},
+{"G", VK_G},
+{"H", VK_H},
+{"I", VK_I},
+{"J", VK_J},
+{"K", VK_K},
+{"L", VK_L},
+{"M", VK_M},
+{"N", VK_N},
+{"O", VK_O},
+{"P", VK_P},
+{"Q", VK_Q},
+{"R", VK_R},
+{"S", VK_S},
+{"T", VK_T},
+{"U", VK_U},
+{"V", VK_V},
+{"W", VK_W},
+{"X", VK_X},
+{"Y", VK_Y},
+{"Z", VK_Z},
 
-{TEXT("Numpad 0"), VK_NUMPAD0},
-{TEXT("Numpad 1"), VK_NUMPAD1},
-{TEXT("Numpad 2"), VK_NUMPAD2},
-{TEXT("Numpad 3"), VK_NUMPAD3},
-{TEXT("Numpad 4"), VK_NUMPAD4},
-{TEXT("Numpad 5"), VK_NUMPAD5},
-{TEXT("Numpad 6"), VK_NUMPAD6},
-{TEXT("Numpad 7"), VK_NUMPAD7},
-{TEXT("Numpad 8"), VK_NUMPAD8},
-{TEXT("Numpad 9"), VK_NUMPAD9},
-{TEXT("Num *"), VK_MULTIPLY},
-{TEXT("Num +"), VK_ADD},
-//{TEXT("Num Enter"), VK_SEPARATOR},	//this one doesnt seem to work
-{TEXT("Num -"), VK_SUBTRACT},
-{TEXT("Num ."), VK_DECIMAL},
-{TEXT("Num /"), VK_DIVIDE},
-{TEXT("F1"), VK_F1},
-{TEXT("F2"), VK_F2},
-{TEXT("F3"), VK_F3},
-{TEXT("F4"), VK_F4},
-{TEXT("F5"), VK_F5},
-{TEXT("F6"), VK_F6},
-{TEXT("F7"), VK_F7},
-{TEXT("F8"), VK_F8},
-{TEXT("F9"), VK_F9},
-{TEXT("F10"), VK_F10},
-{TEXT("F11"), VK_F11},
-{TEXT("F12"), VK_F12},
+{"Numpad 0", VK_NUMPAD0},
+{"Numpad 1", VK_NUMPAD1},
+{"Numpad 2", VK_NUMPAD2},
+{"Numpad 3", VK_NUMPAD3},
+{"Numpad 4", VK_NUMPAD4},
+{"Numpad 5", VK_NUMPAD5},
+{"Numpad 6", VK_NUMPAD6},
+{"Numpad 7", VK_NUMPAD7},
+{"Numpad 8", VK_NUMPAD8},
+{"Numpad 9", VK_NUMPAD9},
+{"Num *", VK_MULTIPLY},
+{"Num +", VK_ADD},
+// {"Num Enter"), VK_SEPARATOR},	//this one doesnt seem to work
+{"Num -", VK_SUBTRACT},
+{"Num .", VK_DECIMAL},
+{"Num /", VK_DIVIDE},
+{"F1", VK_F1},
+{"F2", VK_F2},
+{"F3", VK_F3},
+{"F4", VK_F4},
+{"F5", VK_F5},
+{"F6", VK_F6},
+{"F7", VK_F7},
+{"F8", VK_F8},
+{"F9", VK_F9},
+{"F10", VK_F10},
+{"F11", VK_F11},
+{"F12", VK_F12},
 
-{TEXT("~"), VK_OEM_3},
-{TEXT("-"), VK_OEM_MINUS},
-{TEXT("="), VK_OEM_PLUS},
-{TEXT("["), VK_OEM_4},
-{TEXT("]"), VK_OEM_6},
-{TEXT(";"), VK_OEM_1},
-{TEXT("'"), VK_OEM_7},
-{TEXT("\\"), VK_OEM_5},
-{TEXT(","), VK_OEM_COMMA},
-{TEXT("."), VK_OEM_PERIOD},
-{TEXT("/"), VK_OEM_2},
+{"F13", VK_F13},
+{"F14", VK_F14},
+{"F15", VK_F15},
+{"F16", VK_F16},
+{"F17", VK_F17},
+{"F18", VK_F18},
+{"F19", VK_F19},
+{"F20", VK_F20},
+{"F21", VK_F21},
+{"F22", VK_F22},
+{"F23", VK_F23},
+{"F24", VK_F24},
 
-{TEXT("<>"), VK_OEM_102},
+{"~", VK_OEM_3},
+{"-", VK_OEM_MINUS},
+{"=", VK_OEM_PLUS},
+{"[", VK_OEM_4},
+{"]", VK_OEM_6},
+{";", VK_OEM_1},
+{"'", VK_OEM_7},
+{"\\", VK_OEM_5},
+{",", VK_OEM_COMMA},
+{".", VK_OEM_PERIOD},
+{"/", VK_OEM_2},
+
+{"<>", VK_OEM_102},
 };
 
 #define nbKeys sizeof(namedKeyArray)/sizeof(KeyIDNAME)
 
-generic_string Shortcut::toString() const
+string Shortcut::toString() const
 {
-	generic_string sc = TEXT("");
+	string sc;
 	if (!isEnabled())
 		return sc;
 
 	if (_keyCombo._isCtrl)
-		sc += TEXT("Ctrl+");
+		sc += "Ctrl+";
 	if (_keyCombo._isAlt)
-		sc += TEXT("Alt+");
+		sc += "Alt+";
 	if (_keyCombo._isShift)
-		sc += TEXT("Shift+");
+		sc += "Shift+";
 
-	generic_string keyString;
+	string keyString;
 	getKeyStrFromVal(_keyCombo._key, keyString);
 	sc += keyString;
 	return sc;
 }
 
-void Shortcut::setName(const TCHAR * menuName, const TCHAR * shortcutName)
+void Shortcut::setName(const char* menuName, const char* shortcutName)
 {
-	lstrcpyn(_menuName, menuName, nameLenMax);
-	TCHAR const * name = shortcutName ? shortcutName : menuName;
+	lstrcpynA(_menuName, menuName, menuItemStrLenMax);
+	char const * name = shortcutName ? shortcutName : menuName;
 	size_t i = 0, j = 0;
-	while (name[j] != 0 && i < (nameLenMax - 1))
+	while (name[j] != 0 && i < (menuItemStrLenMax - 1))
 	{
 		if (name[j] != '&')
 		{
@@ -181,34 +194,34 @@ void Shortcut::setName(const TCHAR * menuName, const TCHAR * shortcutName)
 	_name[i] = 0;
 }
 
-generic_string ScintillaKeyMap::toString() const
+string ScintillaKeyMap::toString() const
 {
-	generic_string sc = TEXT("");
+	string sc;
 	size_t nbCombos = getSize();
 	for (size_t combo = 0; combo < nbCombos; ++combo)
 	{
 		sc += toString(combo);
 		if (combo < nbCombos - 1)
-			sc += TEXT(" or ");
+			sc += " or ";
 	}
 	return sc;
 }
 
-generic_string ScintillaKeyMap::toString(size_t index) const
+string ScintillaKeyMap::toString(size_t index) const
 {
-	generic_string sc = TEXT("");
+	string sc = "";
 	if (!isEnabled())
 		return sc;
 
 	KeyCombo kc = _keyCombos[index];
 	if (kc._isCtrl)
-		sc += TEXT("Ctrl+");
+		sc += "Ctrl+";
 	if (kc._isAlt)
-		sc += TEXT("Alt+");
+		sc += "Alt+";
 	if (kc._isShift)
-		sc += TEXT("Shift+");
+		sc += "Shift+";
 
-	generic_string keyString;
+	string keyString;
 	getKeyStrFromVal(kc._key, keyString);
 	sc += keyString;
 	return sc;
@@ -249,7 +262,7 @@ int ScintillaKeyMap::addKeyCombo(KeyCombo combo)
 
 	for (size_t i = 0; i < _size; ++i)
 	{	//if already in the list do not add it
-		KeyCombo & kc = _keyCombos[i];
+		const KeyCombo& kc = _keyCombos[i];
 		if (combo._key == kc._key && combo._isCtrl == kc._isCtrl && combo._isAlt == kc._isAlt && combo._isShift == kc._isShift)
 			return static_cast<int32_t>(i);	//already in the list
 	}
@@ -268,9 +281,9 @@ size_t ScintillaKeyMap::getSize() const
 	return _size;
 }
 
-void getKeyStrFromVal(UCHAR keyVal, generic_string & str)
+void getKeyStrFromVal(UCHAR keyVal, string & str)
 {
-	str = TEXT("");
+	str = "";
 	bool found = false;
 	size_t i;
 	for (i = 0; i < nbKeys; ++i)
@@ -284,26 +297,26 @@ void getKeyStrFromVal(UCHAR keyVal, generic_string & str)
 	if (found)
 		str = namedKeyArray[i].name;
 	else 
-		str = TEXT("Unlisted");
+		str = "Unlisted";
 }
 
-void getNameStrFromCmd(DWORD cmd, generic_string & str)
+void getNameStrFromCmd(DWORD cmd, wstring & str)
 {
 	if ((cmd >= ID_MACRO) && (cmd < ID_MACRO_LIMIT))
 	{
-		vector<MacroShortcut> & theMacros = (NppParameters::getInstance()).getMacroList();
+		const vector<MacroShortcut> & theMacros = (NppParameters::getInstance()).getMacroList();
 		int i = cmd - ID_MACRO;
-		str = theMacros[i].getName();
+		str = string2wstring(theMacros[i].getName(), CP_UTF8);
 	}
 	else if ((cmd >= ID_USER_CMD) && (cmd < ID_USER_CMD_LIMIT))
 	{
-		vector<UserCommand> & userCommands = (NppParameters::getInstance()).getUserCommandList();
+		const vector<UserCommand> & userCommands = (NppParameters::getInstance()).getUserCommandList();
 		int i = cmd - ID_USER_CMD;
-		str = userCommands[i].getName();
+		str = string2wstring(userCommands[i].getName(), CP_UTF8);
 	}
 	else if ((cmd >= ID_PLUGINS_CMD) && (cmd < ID_PLUGINS_CMD_LIMIT))
 	{
-		vector<PluginCmdShortcut> & pluginCmds = (NppParameters::getInstance()).getPluginCommandList();
+		const vector<PluginCmdShortcut> & pluginCmds = (NppParameters::getInstance()).getPluginCommandList();
 		size_t i = 0;
 		for (size_t j = 0, len = pluginCmds.size(); j < len ; ++j)
 		{
@@ -313,15 +326,14 @@ void getNameStrFromCmd(DWORD cmd, generic_string & str)
 				break;
 			}
 		}
-		str = pluginCmds[i].getName();
+		str = string2wstring(pluginCmds[i].getName(), CP_UTF8);
 	}
 	else
 	{
 		HWND hNotepad_plus = ::FindWindow(Notepad_plus_Window::getClassName(), NULL);
-		const int commandSize = 64;
-		TCHAR cmdName[commandSize];
+		wchar_t cmdName[menuItemStrLenMax];
 		HMENU m = reinterpret_cast<HMENU>(::SendMessage(hNotepad_plus, NPPM_INTERNAL_GETMENU, 0, 0));
-		int nbChar = ::GetMenuString(m, cmd, cmdName, commandSize, MF_BYCOMMAND);
+		int nbChar = ::GetMenuString(m, cmd, cmdName, menuItemStrLenMax, MF_BYCOMMAND);
 		if (!nbChar)
 			return;
 		bool fin = false;
@@ -371,11 +383,11 @@ intptr_t CALLBACK Shortcut::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 {
 	switch (Message)
 	{
-		case WM_INITDIALOG :
+		case WM_INITDIALOG:
 		{
 			NppDarkMode::autoSubclassAndThemeChildControls(_hSelf);
 
-			::SetDlgItemText(_hSelf, IDC_NAME_EDIT, _canModifyName ? getMenuName() : getName());	//display the menu name, with ampersands, for macros
+			::SetDlgItemText(_hSelf, IDC_NAME_EDIT, _canModifyName ? string2wstring(getMenuName(), CP_UTF8).c_str() : string2wstring(getName(), CP_UTF8).c_str());	//display the menu name, with ampersands, for macros
 			if (!_canModifyName)
 				::SendDlgItemMessage(_hSelf, IDC_NAME_EDIT, EM_SETREADONLY, TRUE, 0);
 			auto textlen = ::SendDlgItemMessage(_hSelf, IDC_NAME_EDIT, WM_GETTEXTLENGTH, 0, 0);
@@ -387,7 +399,7 @@ intptr_t CALLBACK Shortcut::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 			int iFound = -1;
 			for (size_t i = 0 ; i < nbKeys ; ++i)
 			{
-				::SendDlgItemMessage(_hSelf, IDC_KEY_COMBO, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(namedKeyArray[i].name));
+				::SendDlgItemMessage(_hSelf, IDC_KEY_COMBO, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(string2wstring(namedKeyArray[i].name, CP_UTF8).c_str()));
 
 				if (_keyCombo._key == namedKeyArray[i].id)
 					iFound = static_cast<int32_t>(i);
@@ -402,26 +414,18 @@ intptr_t CALLBACK Shortcut::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 			updateConflictState();
 			NativeLangSpeaker* nativeLangSpeaker = NppParameters::getInstance().getNativeLangSpeaker();
 			nativeLangSpeaker->changeDlgLang(_hSelf, "ShortcutMapperSubDialg");
-			goToCenter();
+			goToCenter(SWP_SHOWWINDOW | SWP_NOSIZE);
 			return TRUE;
 		}
 
 		case WM_CTLCOLOREDIT:
 		{
-			if (NppDarkMode::isEnabled())
-			{
-				return NppDarkMode::onCtlColorSofter(reinterpret_cast<HDC>(wParam));
-			}
-			break;
+			return NppDarkMode::onCtlColorSofter(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_CTLCOLORLISTBOX:
 		{
-			if (NppDarkMode::isEnabled())
-			{
-				return NppDarkMode::onCtlColor(reinterpret_cast<HDC>(wParam));
-			}
-			break;
+			return NppDarkMode::onCtlColor(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_CTLCOLORDLG:
@@ -435,7 +439,6 @@ intptr_t CALLBACK Shortcut::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 					return NppDarkMode::onCtlColor(reinterpret_cast<HDC>(wParam));
 				}
 				return NppDarkMode::onCtlColorDarker(reinterpret_cast<HDC>(wParam));
-
 			}
 			break;
 		}
@@ -455,10 +458,18 @@ intptr_t CALLBACK Shortcut::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 			return TRUE;
 		}
 
-		case WM_COMMAND : 
+		case WM_DPICHANGED:
+		{
+			_dpiManager.setDpiWP(wParam);
+			setPositionDpi(lParam);
+
+			return TRUE;
+		}
+
+		case WM_COMMAND:
 		{
 			auto textlen = ::SendDlgItemMessage(_hSelf, IDC_NAME_EDIT, WM_GETTEXTLENGTH, 0, 0);
-			switch (wParam)
+			switch (LOWORD(wParam))
 			{
 				case IDC_CTRL_CHECK :
 					_keyCombo._isCtrl = BST_CHECKED == ::SendDlgItemMessage(_hSelf, static_cast<int32_t>(wParam), BM_GETCHECK, 0, 0);
@@ -485,9 +496,9 @@ intptr_t CALLBACK Shortcut::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 
 					if (_canModifyName)
 					{
-						TCHAR editName[nameLenMax];
-						::SendDlgItemMessage(_hSelf, IDC_NAME_EDIT, WM_GETTEXT, nameLenMax, reinterpret_cast<LPARAM>(editName));
-						setName(editName);
+						wchar_t editName[menuItemStrLenMax]{};
+						::SendDlgItemMessage(_hSelf, IDC_NAME_EDIT, WM_GETTEXT, menuItemStrLenMax, reinterpret_cast<LPARAM>(editName));
+						setName(wstring2string(editName, CP_UTF8).c_str());
 					}
 					::EndDialog(_hSelf, 0);
 					updateConflictState(true);
@@ -565,7 +576,8 @@ void Accelerator::updateShortcuts()
 				incrFindAcc.push_back(_pAccelArray[offset]);
 
 			if (shortcuts[i].getID() == IDM_SEARCH_FIND || shortcuts[i].getID() == IDM_SEARCH_REPLACE ||
-				shortcuts[i].getID() == IDM_SEARCH_FINDINFILES || shortcuts[i].getID() == IDM_SEARCH_MARK)
+				shortcuts[i].getID() == IDM_SEARCH_FINDINFILES || shortcuts[i].getID() == IDM_SEARCH_MARK ||
+				shortcuts[i].getID() == IDM_SEARCH_FINDNEXT || shortcuts[i].getID() == IDM_SEARCH_FINDPREV)
 				findReplaceAcc.push_back(_pAccelArray[offset]);
 
 			++offset;
@@ -616,7 +628,6 @@ void Accelerator::updateShortcuts()
 
 	if (_hIncFindAccTab)
 		::DestroyAcceleratorTable(_hIncFindAccTab);
-
 	size_t nb = incrFindAcc.size();
 	ACCEL *tmpIncrFindAccelArray = new ACCEL[nb];
 	for (i = 0; i < nb; ++i)
@@ -626,18 +637,33 @@ void Accelerator::updateShortcuts()
 	_hIncFindAccTab = ::CreateAcceleratorTable(tmpIncrFindAccelArray, static_cast<int32_t>(nb));
 	delete [] tmpIncrFindAccelArray;
 
-	if (_hIncFindAccTab)
-		::DestroyAcceleratorTable(_hIncFindAccTab);
+	if (_hAccTabSwitch)
+		::DestroyAcceleratorTable(_hAccTabSwitch);
 
+	ACCEL accNextTab{ BYTE{FVIRTKEY | FCONTROL}, VK_TAB, IDC_NEXT_TAB };
+	ACCEL accPrevTab{ BYTE{FVIRTKEY | FCONTROL | FSHIFT}, VK_TAB, IDC_PREV_TAB };
+	vector<ACCEL> tabSwitchAcc{ accNextTab, accPrevTab };
+	const size_t nbTabSwitchAcc = tabSwitchAcc.size();
+	if (nbTabSwitchAcc > 0)
+	{
+		ACCEL* tmpTabSwitchAcc = new ACCEL[nbTabSwitchAcc];
+		for (i = 0; i < nbTabSwitchAcc; ++i)
+			tmpTabSwitchAcc[i] = tabSwitchAcc.at(i);
+		_hAccTabSwitch = ::CreateAcceleratorTable(tmpTabSwitchAcc, static_cast<int>(nbTabSwitchAcc));
+		delete[] tmpTabSwitchAcc;
+	}
 
 	if (_hFindAccTab)
 		::DestroyAcceleratorTable(_hFindAccTab);
+
 	size_t nbFindReplaceAcc = findReplaceAcc.size();
 	if (nbFindReplaceAcc)
 	{
 		ACCEL* tmpFindAccelArray = new ACCEL[nbFindReplaceAcc];
-		for (size_t i = 0; i < nbFindReplaceAcc; ++i)
-			tmpFindAccelArray[i] = findReplaceAcc[i];
+
+		for (size_t j = 0; j < nbFindReplaceAcc; ++j)
+			tmpFindAccelArray[j] = findReplaceAcc[j];
+
 		_hFindAccTab = ::CreateAcceleratorTable(tmpFindAccelArray, static_cast<int>(nbFindReplaceAcc));
 		delete[] tmpFindAccelArray;
 	}
@@ -683,10 +709,10 @@ void Accelerator::updateMenuItemByCommand(const CommandShortcut& csc)
 	// Ensure that the menu item state is also maintained
 	UINT cmdFlags = GetMenuState(_hAccelMenu, cmdID, MF_BYCOMMAND );
 	cmdFlags = MF_BYCOMMAND | ((cmdFlags&MF_CHECKED) ? MF_CHECKED : MF_UNCHECKED) | ((cmdFlags&MF_DISABLED) ? MF_DISABLED : MF_ENABLED);
-	::ModifyMenu(_hAccelMenu, cmdID, cmdFlags, cmdID, csc.toMenuItemString().c_str());
+	::ModifyMenu(_hAccelMenu, cmdID, cmdFlags, cmdID, string2wstring(csc.toMenuItemString(), CP_UTF8).c_str());
 }
 
-recordedMacroStep::recordedMacroStep(int iMessage, uptr_t wParam, uptr_t lParam, int codepage)
+recordedMacroStep::recordedMacroStep(int iMessage, uptr_t wParam, uptr_t lParam)
 	: _message(iMessage), _wParameter(wParam), _lParameter(lParam), _macroType(mtUseLParameter)
 { 
 	if (_lParameter)
@@ -715,9 +741,7 @@ recordedMacroStep::recordedMacroStep(int iMessage, uptr_t wParam, uptr_t lParam,
 			case IDD_FINDINFILES_FILTERS_COMBO:
 			{
 				char *ch = reinterpret_cast<char *>(_lParameter);
-				TCHAR tch[2];
-				::MultiByteToWideChar(codepage, 0, ch, -1, tch, 2);
-				_sParameter = *tch;
+				_sParameter = ch;
 				_macroType = mtUseSParameter;
 				_lParameter = 0;
 			}
@@ -881,11 +905,14 @@ void recordedMacroStep::PlayBack(Window* pNotepad, ScintillaEditView *pEditView)
 
 		if (_macroType == mtUseSParameter) 
 		{
+			/*
 			int byteBufferLength = ::WideCharToMultiByte(static_cast<UINT>(pEditView->execute(SCI_GETCODEPAGE)), 0, _sParameter.c_str(), -1, NULL, 0, NULL, NULL);
 			auto byteBuffer = std::make_unique< char[] >(byteBufferLength);
 			::WideCharToMultiByte(static_cast<UINT>(pEditView->execute(SCI_GETCODEPAGE)), 0, _sParameter.c_str(), -1, byteBuffer.get(), byteBufferLength, NULL, NULL);
 			auto lParam = reinterpret_cast<LPARAM>(byteBuffer.get());
 			pEditView->execute(_message, _wParameter, lParam);
+			*/
+			pEditView->execute(_message, _wParameter, (LPARAM)_sParameter.c_str());
 		}
 		else
 		{
@@ -901,7 +928,7 @@ void recordedMacroStep::PlayBack(Window* pNotepad, ScintillaEditView *pEditView)
 			|| (_message == SCI_INSERTTEXT) 
 			|| (_message == SCI_APPENDTEXT) )
 		{
-			SCNotification scnN;
+			SCNotification scnN{};
 			scnN.nmhdr.code = SCN_CHARADDED;
 			scnN.nmhdr.hwndFrom = pEditView->getHSelf();
 			scnN.nmhdr.idFrom = 0;
@@ -929,7 +956,7 @@ void ScintillaAccelerator::init(vector<HWND> * vScintillas, HMENU hMenu, HWND me
 void ScintillaAccelerator::updateKeys() 
 {
 	NppParameters& nppParam = NppParameters::getInstance();
-	vector<ScintillaKeyMap> & map = nppParam.getScintillaKeyList();
+	const vector<ScintillaKeyMap> & map = nppParam.getScintillaKeyList();
 	size_t mapSize = map.size();
 	size_t index;
 	size_t nb = nbScintillas();
@@ -957,9 +984,8 @@ void ScintillaAccelerator::updateKeys()
 
 void ScintillaAccelerator::updateMenuItemByID(const ScintillaKeyMap& skm, int id)
 {
-	const int commandSize = 64;
-	TCHAR cmdName[commandSize];
-	::GetMenuString(_hAccelMenu, id, cmdName, commandSize, MF_BYCOMMAND);
+	wchar_t cmdName[menuItemStrLenMax];
+	::GetMenuString(_hAccelMenu, id, cmdName, menuItemStrLenMax, MF_BYCOMMAND);
 	int i = 0;
 	while (cmdName[i] != 0)
 	{
@@ -970,12 +996,11 @@ void ScintillaAccelerator::updateMenuItemByID(const ScintillaKeyMap& skm, int id
 		}
 		++i;
 	}
-	generic_string menuItem = cmdName;
+	wstring menuItem = cmdName;
 	if (skm.isEnabled())
 	{
-		menuItem += TEXT("\t");
-		//menuItem += TEXT("Sc:");	//sc: scintilla shortcut
-		menuItem += skm.toString();
+		menuItem += L"\t";
+		menuItem += string2wstring(skm.toString(), CP_UTF8);
 	}
 	::ModifyMenu(_hAccelMenu, id, MF_BYCOMMAND, id, menuItem.c_str());
 	::DrawMenuBar(_hMenuParent);
@@ -1036,7 +1061,7 @@ void ScintillaKeyMap::showCurrentSettings()
 
 void ScintillaKeyMap::updateListItem(int index)
 {
-	::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_INSERTSTRING, index, reinterpret_cast<LPARAM>(toString(index).c_str()));
+	::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_INSERTSTRING, index, reinterpret_cast<LPARAM>(string2wstring(toString(index), CP_UTF8).c_str()));
 	::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_DELETESTRING, index+1, 0);
 }
 
@@ -1045,21 +1070,21 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 	
 	switch (Message)
 	{
-		case WM_INITDIALOG :
+		case WM_INITDIALOG:
 		{
 			NppDarkMode::autoSubclassAndThemeChildControls(_hSelf);
 
-			::SetDlgItemText(_hSelf, IDC_NAME_EDIT, _name);
+			::SetDlgItemText(_hSelf, IDC_NAME_EDIT, string2wstring(_name, CP_UTF8).c_str());
 			_keyCombo = _keyCombos[0];
 
 			for (size_t i = 0 ; i < nbKeys ; ++i)
 			{
-				::SendDlgItemMessage(_hSelf, IDC_KEY_COMBO, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(namedKeyArray[i].name));
+				::SendDlgItemMessage(_hSelf, IDC_KEY_COMBO, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(string2wstring(namedKeyArray[i].name, CP_UTF8).c_str()));
 			}
 
 			for (size_t i = 0; i < _size; ++i)
 			{
-				::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(toString(i).c_str()));
+				::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(string2wstring(toString(i), CP_UTF8).c_str()));
 			}
 			::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_SETCURSEL, 0, 0);
 
@@ -1071,26 +1096,18 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 
 			NativeLangSpeaker* nativeLangSpeaker = NppParameters::getInstance().getNativeLangSpeaker();
 			nativeLangSpeaker->changeDlgLang(_hSelf, "ShortcutMapperSubDialg");
-			goToCenter();
+			goToCenter(SWP_SHOWWINDOW | SWP_NOSIZE);
 			return TRUE;
 		}
 
 		case WM_CTLCOLOREDIT:
 		{
-			if (NppDarkMode::isEnabled())
-			{
-				return NppDarkMode::onCtlColor(reinterpret_cast<HDC>(wParam));
-			}
-			break;
+			return NppDarkMode::onCtlColor(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_CTLCOLORLISTBOX:
 		{
-			if (NppDarkMode::isEnabled())
-			{
-				return NppDarkMode::onCtlColorListbox(wParam, lParam);
-			}
-			break;
+			return NppDarkMode::onCtlColorListbox(wParam, lParam);
 		}
 
 		case WM_CTLCOLORDLG:
@@ -1123,9 +1140,17 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 			return TRUE;
 		}
 
-		case WM_COMMAND : 
+		case WM_DPICHANGED:
 		{
-			switch (wParam)
+			_dpiManager.setDpiWP(wParam);
+			setPositionDpi(lParam);
+
+			return TRUE;
+		}
+
+		case WM_COMMAND:
+		{
+			switch (LOWORD(wParam))
 			{
 				case IDC_CTRL_CHECK :
 					_keyCombo._isCtrl = BST_CHECKED == ::SendDlgItemMessage(_hSelf, static_cast<int32_t>(wParam), BM_GETCHECK, 0, 0);
@@ -1153,7 +1178,7 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 					::EndDialog(_hSelf, -1);
 					return TRUE;
 
-				case IDC_BUTTON_ADD: 
+				case IDC_BUTTON_ADD:
 				{
 					size_t oldsize = _size;
 					int res = addKeyCombo(_keyCombo);
@@ -1161,10 +1186,10 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 					{
 						if (res == static_cast<int32_t>(oldsize))
 						{
-							::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_INSERTSTRING, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(toString(res).c_str()));
+							::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_INSERTSTRING, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(string2wstring(toString(res), CP_UTF8).c_str()));
 						}
 						else
-						{	//update current generic_string, can happen if it was disabled
+						{	//update current string, can happen if it was disabled
 							updateListItem(res);
 						}
 						::SendDlgItemMessage(_hSelf, IDC_LIST_KEYS, LB_SETCURSEL, res, 0);
@@ -1197,7 +1222,7 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 				}
 
 				default:
-					if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == LBN_SELCHANGE)
+					if (HIWORD(wParam) == CBN_SELCHANGE) // LBN_SELCHANGE has same value 1
 					{
 						switch(LOWORD(wParam))
 						{
@@ -1226,34 +1251,58 @@ intptr_t CALLBACK ScintillaKeyMap::run_dlgProc(UINT Message, WPARAM wParam, LPAR
 	return FALSE;
 }
 
-CommandShortcut::CommandShortcut(const Shortcut& sc, long id) :	Shortcut(sc), _id(id)
+void CommandShortcut::setCategoryFromMenu(HMENU hMenu)
 {
-	_shortcutName = sc.getName();
-	if ( _id >= IDM_WINDOW_SORT_FN_ASC and _id <= IDM_WINDOW_SORT_FS_DSC)
-		_category = TEXT("Window");
+	NativeLangSpeaker* pNativeSpeaker = NppParameters::getInstance().getNativeLangSpeaker();
+
+	if (_id >= IDM_WINDOW_WINDOWS && _id <= IDM_WINDOW_SORT_FS_DSC)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "Window", L"Window");
+	else if ( _id >= IDM_VIEW_GOTO_ANOTHER_VIEW && _id <= IDM_VIEW_GOTO_END)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "view", L"View");
+	else if (_id == IDM_EDIT_LTR || _id == IDM_EDIT_RTL)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "view", L"View");
+	else if (_id == IDC_PREV_DOC || _id == IDC_NEXT_DOC)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "view", L"View");
+	else if (_id == IDM_FORMAT_TODOS || _id == IDM_FORMAT_TOUNIX || _id == IDM_FORMAT_TOMAC)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "edit", L"Edit");
+	else if (_id == IDM_EDIT_AUTOCOMPLETE || _id == IDM_EDIT_AUTOCOMPLETE_CURRENTFILE || _id == IDM_EDIT_FUNCCALLTIP ||
+		_id == IDM_EDIT_AUTOCOMPLETE_PATH || _id == IDM_EDIT_FUNCCALLTIP_PREVIOUS || _id == IDM_EDIT_FUNCCALLTIP_NEXT)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "edit", L"Edit");
+	else if (_id == IDM_LANGSTYLE_CONFIG_DLG)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "settings", L"Settings");
+	else if (_id == IDM_MACRO_STARTRECORDINGMACRO  ||_id == IDM_MACRO_STOPRECORDINGMACRO  || _id == IDM_MACRO_RUNMULTIMACRODLG ||
+		_id == IDM_MACRO_PLAYBACKRECORDEDMACRO  ||_id == IDM_MACRO_SAVECURRENTMACRO || _id == IDC_EDIT_TOGGLEMACRORECORDING)
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "macro", L"Macro");
+
+
 	else if ( _id < IDM_EDIT)
-		_category = TEXT("File");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "file", L"File");
 	else if ( _id < IDM_SEARCH)
-		_category = TEXT("Edit");
-	else if (((_id >= IDM_EDIT_AUTOCOMPLETE) && (_id <= IDM_EDIT_AUTOCOMPLETE_PATH)) || 
-			 ((_id >= IDM_EDIT_FUNCCALLTIP_PREVIOUS) && (_id <= IDM_EDIT_FUNCCALLTIP_NEXT)))
-		_category = TEXT("Edit");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "edit",L"Edit");
 	else if ( _id < IDM_VIEW)
-		_category = TEXT("Search");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "search", L"Search");
 	else if ( _id < IDM_FORMAT)
-		_category = TEXT("View");
-	else if ( _id >= IDM_VIEW_GOTO_ANOTHER_VIEW and _id <= IDM_VIEW_LOAD_IN_NEW_INSTANCE)
-		_category = TEXT("View");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "view", L"View");
 	else if ( _id < IDM_LANG)
-		_category = TEXT("Format");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "encoding", L"Encoding");
 	else if ( _id < IDM_ABOUT)
-		_category = TEXT("Lang");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "language", L"Language");
 	else if ( _id < IDM_SETTING)
-		_category = TEXT("About");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "about", L"About");
 	else if ( _id < IDM_TOOL)
-		_category = TEXT("Setting");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "settings", L"Settings");
 	else if ( _id < IDM_EXECUTE)
-		_category = TEXT("Tool");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "tools", L"Tools");
 	else
-		_category = TEXT("Execute");
+		pNativeSpeaker->getMainMenuEntryName(_category, hMenu, "run", L"Run");
+}
+
+CommandShortcut& CommandShortcut::operator = (const Shortcut& sct)
+{
+	if (this != &sct)
+	{
+		strcpy(this->_name, sct.getName());
+		this->_keyCombo = sct.getKeyCombo();
+	}
+	return *this;
 }

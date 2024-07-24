@@ -66,7 +66,7 @@ public:
 	std::unique_ptr<char[]> chars;
 	std::unique_ptr<unsigned char[]> styles;
 	std::unique_ptr<XYPOSITION[]> positions;
-	char bracePreviousStyles[2];
+	unsigned char bracePreviousStyles[2];
 
 	std::unique_ptr<BidiData> bidiData;
 
@@ -83,6 +83,7 @@ public:
 	void operator=(LineLayout &&) = delete;
 	virtual ~LineLayout();
 	void Resize(int maxLineLength_);
+	void ReSet(Sci::Line lineNumber_, Sci::Position maxLineLength_);
 	void EnsureBidiData();
 	void Free() noexcept;
 	void ClearPositions();
@@ -107,7 +108,7 @@ public:
 	Interval Span(int start, int end) const noexcept;
 	Interval SpanByte(int index) const noexcept;
 	int EndLineStyle() const noexcept;
-	void WrapLine(const Document *pdoc, Sci::Position posLineStart, Wrap wrapState);
+	void WrapLine(const Document *pdoc, Sci::Position posLineStart, Wrap wrapState, XYPOSITION wrapWidth);
 };
 
 struct ScreenLine : public IScreenLine {
@@ -140,6 +141,14 @@ struct ScreenLine : public IScreenLine {
 	XYPOSITION TabPositionAfter(XYPOSITION xPosition) const override;
 };
 
+struct SignificantLines {
+	Sci::Line lineCaret;
+	Sci::Line lineTop;
+	Sci::Line linesOnScreen;
+	Scintilla::LineCache level;
+	bool LineMayCache(Sci::Line line) const noexcept;
+};
+
 /**
  */
 class LineLayoutCache {
@@ -147,7 +156,7 @@ public:
 private:
 	Scintilla::LineCache level;
 	std::vector<std::shared_ptr<LineLayout>>cache;
-	bool allInvalidated;
+	LineLayout::ValidLevel maxValidity;
 	int styleClock;
 	size_t EntryForLine(Sci::Line line) const noexcept;
 	void AllocateForLevel(Sci::Line linesOnScreen, Sci::Line linesInDoc);
@@ -180,6 +189,9 @@ public:
 
 typedef std::map<unsigned int, Representation> MapRepresentation;
 
+const char *ControlCharacterString(unsigned char ch) noexcept;
+void Hexits(char *hexits, int ch) noexcept;
+
 class SpecialRepresentations {
 	MapRepresentation mapReprs;
 	unsigned short startByteHasReprs[0x100] {};
@@ -199,6 +211,7 @@ public:
 		return startByteHasReprs[ch] != 0;
 	}
 	void Clear();
+	void SetDefaultRepresentations(int dbcsCodePage);
 };
 
 struct TextSegment {

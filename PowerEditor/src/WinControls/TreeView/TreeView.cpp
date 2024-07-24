@@ -19,7 +19,10 @@
 #include "TreeView.h"
 #include "Parameters.h"
 
-#define CY_ITEMHEIGHT     18
+using namespace std;
+
+constexpr int g_treeviewItemPadding = 1;
+constexpr int g_treeviewIcoSize = 16;
 
 void TreeView::init(HINSTANCE hInst, HWND parent, int treeViewID)
 {
@@ -32,7 +35,7 @@ void TreeView::init(HINSTANCE hInst, HWND parent, int treeViewID)
 
 	_hSelf = CreateWindowEx(0,
 							WC_TREEVIEW,
-							TEXT("Tree View"),
+							L"Tree View",
 							WS_CHILD | WS_BORDER | treeViewStyles,
 							0,
 							0,
@@ -45,11 +48,11 @@ void TreeView::init(HINSTANCE hInst, HWND parent, int treeViewID)
 
 	NppDarkMode::setTreeViewStyle(_hSelf);
 
-	int itemHeight = NppParameters::getInstance()._dpiManager.scaleY(CY_ITEMHEIGHT);
+	const int itemHeight = DPIManagerV2::scale(g_treeviewIcoSize + g_treeviewItemPadding * 2, _hParent);
 	TreeView_SetItemHeight(_hSelf, itemHeight);
 
-	::SetWindowLongPtr(_hSelf, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-	_defaultProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(_hSelf, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(staticProc)));
+	constexpr UINT_PTR idSubclassTreeview = 1;
+	::SetWindowSubclass(_hSelf, staticProc, idSubclassTreeview, reinterpret_cast<DWORD_PTR>(this));
 }
 
 
@@ -73,7 +76,7 @@ LRESULT TreeView::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 			// with the TVE_COLLAPSE and TVE_COLLAPSERESET flags set.
 			// That in turn removes child items which is unwanted.
 			// Below is a workaround for that.
-			TVITEM tvItem = {};
+			TVITEM tvItem{};
 			tvItem.hItem = reinterpret_cast<HTREEITEM>(lParam);
 			tvItem.mask = TVIF_STATE | TVIF_HANDLE | TVIF_PARAM;
 			tvItem.stateMask = TVIS_EXPANDEDONCE;
@@ -83,17 +86,33 @@ LRESULT TreeView::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 			{
 				// If the flag is set, then manually notify parent that an item is collapsed/expanded
 				// so that it can change icon, etc.
-				NMTREEVIEW nmtv = {};
+				NMTREEVIEW nmtv{};
 				nmtv.hdr.code = TVN_ITEMEXPANDED;
 				nmtv.hdr.hwndFrom = _hSelf;
 				nmtv.hdr.idFrom = 0;
-				nmtv.action = wParam & TVE_COLLAPSE ? TVE_COLLAPSE : TVE_EXPAND;
+				nmtv.action = (wParam & TVE_COLLAPSE) ? TVE_COLLAPSE : TVE_EXPAND;
 				nmtv.itemNew.hItem = tvItem.hItem;
 				::SendMessage(_hParent, WM_NOTIFY, nmtv.hdr.idFrom, reinterpret_cast<LPARAM>(&nmtv));
 			}
 		}
 	}
-	return ::CallWindowProc(_defaultProc, hwnd, Message, wParam, lParam);
+	return ::DefSubclassProc(hwnd, Message, wParam, lParam);
+}
+
+LRESULT TreeView::staticProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	switch (Message)
+	{
+		case WM_NCDESTROY:
+		{
+			::RemoveWindowSubclass(hwnd, staticProc, uIdSubclass);
+			break;
+		}
+
+		default:
+			break;
+	}
+	return reinterpret_cast<TreeView*>(dwRefData)->runProc(hwnd, Message, wParam, lParam);
 }
 
 void TreeView::makeLabelEditable(bool toBeEnabled)
@@ -112,7 +131,7 @@ bool TreeView::setItemParam(HTREEITEM Item2Set, LPARAM param)
 	if (!Item2Set)
 		return false;
 
-	TVITEM tvItem;
+	TVITEM tvItem{};
 	tvItem.hItem = Item2Set;
 	tvItem.mask = TVIF_PARAM;
 	tvItem.lParam = param;
@@ -125,8 +144,8 @@ LPARAM TreeView::getItemParam(HTREEITEM Item2Get) const
 {
 	if (!Item2Get)
 		return false;
-	//TCHAR textBuffer[MAX_PATH];
-	TVITEM tvItem;
+	//wchar_t textBuffer[MAX_PATH];
+	TVITEM tvItem{};
 	tvItem.hItem = Item2Get;
 	tvItem.mask = TVIF_PARAM;
 	//tvItem.pszText = textBuffer;
@@ -135,12 +154,12 @@ LPARAM TreeView::getItemParam(HTREEITEM Item2Get) const
 	return tvItem.lParam;
 }
 
-generic_string TreeView::getItemDisplayName(HTREEITEM Item2Set) const
+wstring TreeView::getItemDisplayName(HTREEITEM Item2Set) const
 {
 	if (!Item2Set)
-		return TEXT("");
-	TCHAR textBuffer[MAX_PATH] = { '\0' };
-	TVITEM tvItem;
+		return L"";
+	wchar_t textBuffer[MAX_PATH] = { '\0' };
+	TVITEM tvItem{};
 	tvItem.hItem = Item2Set;
 	tvItem.mask = TVIF_TEXT;
 	tvItem.pszText = textBuffer;
@@ -149,12 +168,12 @@ generic_string TreeView::getItemDisplayName(HTREEITEM Item2Set) const
 	return tvItem.pszText;
 }
 
-bool TreeView::renameItem(HTREEITEM Item2Set, const TCHAR *newName)
+bool TreeView::renameItem(HTREEITEM Item2Set, const wchar_t *newName)
 {
 	if (!Item2Set || !newName)
 		return false;
 
-	TVITEM tvItem;
+	TVITEM tvItem{};
 	tvItem.hItem = Item2Set;
 	tvItem.mask = TVIF_TEXT;
 	tvItem.pszText = (LPWSTR)newName;
@@ -163,9 +182,9 @@ bool TreeView::renameItem(HTREEITEM Item2Set, const TCHAR *newName)
 	return true;
 }
 
-HTREEITEM TreeView::addItem(const TCHAR *itemName, HTREEITEM hParentItem, int iImage, LPARAM lParam)
+HTREEITEM TreeView::addItem(const wchar_t *itemName, HTREEITEM hParentItem, int iImage, LPARAM lParam)
 {
-	TVITEM tvi;
+	TVITEM tvi{};
 	tvi.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 
 	// Set the item label.
@@ -178,7 +197,7 @@ HTREEITEM TreeView::addItem(const TCHAR *itemName, HTREEITEM hParentItem, int iI
 
 	tvi.lParam = lParam;
 
-	TVINSERTSTRUCT tvInsertStruct;
+	TVINSERTSTRUCT tvInsertStruct{};
 	tvInsertStruct.item = tvi;
 	tvInsertStruct.hInsertAfter = TVI_LAST;
 	tvInsertStruct.hParent = hParentItem;
@@ -192,7 +211,7 @@ void TreeView::removeItem(HTREEITEM hTreeItem)
 	cleanSubEntries(hTreeItem);
 
 	// Deallocate current entry
-	TVITEM tvItem;
+	TVITEM tvItem{};
 	tvItem.hItem = hTreeItem;
 	tvItem.mask = TVIF_PARAM;
 	SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvItem));
@@ -217,15 +236,15 @@ void TreeView::dupTree(HTREEITEM hTree2Dup, HTREEITEM hParentItem)
 {
 	for (HTREEITEM hItem = getChildFrom(hTree2Dup); hItem != NULL; hItem = getNextSibling(hItem))
 	{
-		TCHAR textBuffer[MAX_PATH];
-		TVITEM tvItem;
+		wchar_t textBuffer[MAX_PATH]{};
+		TVITEM tvItem{};
 		tvItem.hItem = hItem;
 		tvItem.pszText = textBuffer;
 		tvItem.cchTextMax = MAX_PATH;
 		tvItem.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvItem));
 
-		TVINSERTSTRUCT tvInsertStruct;
+		TVINSERTSTRUCT tvInsertStruct{};
 		tvInsertStruct.item = tvItem;
 		tvInsertStruct.hInsertAfter = TVI_LAST;
 		tvInsertStruct.hParent = hParentItem;
@@ -234,18 +253,18 @@ void TreeView::dupTree(HTREEITEM hTree2Dup, HTREEITEM hParentItem)
 	}
 }
 
-HTREEITEM TreeView::searchSubItemByName(const TCHAR *itemName, HTREEITEM hParentItem)
+HTREEITEM TreeView::searchSubItemByName(const wchar_t *itemName, HTREEITEM hParentItem)
 {
-	HTREEITEM hItem = NULL;
-	if (hParentItem != NULL)
+	HTREEITEM hItem = nullptr;
+	if (hParentItem != nullptr)
 		hItem = getChildFrom(hParentItem);
 	else
 		hItem = getRoot();
 
-	for ( ; hItem != NULL; hItem = getNextSibling(hItem))
+	while (hItem != nullptr)
 	{
-		TCHAR textBuffer[MAX_PATH] = { '\0' };
-		TVITEM tvItem;
+		wchar_t textBuffer[MAX_PATH] = { '\0' };
+		TVITEM tvItem{};
 		tvItem.hItem = hItem;
 		tvItem.pszText = textBuffer;
 		tvItem.cchTextMax = MAX_PATH;
@@ -256,51 +275,46 @@ HTREEITEM TreeView::searchSubItemByName(const TCHAR *itemName, HTREEITEM hParent
 		{
 			return hItem;
 		}
+
+		hItem = getNextSibling(hItem);
 	}
-	return NULL;
+	return nullptr;
 }
 
-BOOL TreeView::setImageList(int w, int h, int nbImage, int image_id, ...)
+bool TreeView::setImageList(std::vector<int> imageIds, int imgSize)
 {
-	HBITMAP hbmp;
-	COLORREF maskColour = RGB(192, 192, 192);
+	const int nbImage = static_cast<int>(imageIds.size());
+	if (imgSize <= 0)
+		imgSize = g_treeviewIcoSize;
 
 	// Creation of image list
-	int bmDpiDynW = NppParameters::getInstance()._dpiManager.scaleX(w);
-	int bmDpiDynH = NppParameters::getInstance()._dpiManager.scaleY(h);
-	if ((_hImaLst = ImageList_Create(bmDpiDynW, bmDpiDynH, ILC_COLOR32 | ILC_MASK, nbImage, 0)) == NULL)
-		return FALSE;
+	int dpiImgSize = DPIManagerV2::scale(imgSize, _hParent);
+	if ((_hImaLst = ::ImageList_Create(dpiImgSize, dpiImgSize, ILC_COLOR32 | ILC_MASK, nbImage, 0)) == nullptr)
+		return false;
 
-	// Add the bmp in the list
-	va_list argLst;
-	va_start(argLst, image_id);
-	int imageID = image_id;
-
-	for (int i = 0; i < nbImage; i++)
+	// Add the ico into the list
+	for (const int& id : imageIds)
 	{
-		if (i > 0)
-			imageID = va_arg(argLst, int);
+		HICON hIcon = nullptr;
+		DPIManagerV2::loadIcon(_hInst, MAKEINTRESOURCE(id), dpiImgSize, dpiImgSize, &hIcon, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
+		if (hIcon == nullptr)
+			return false;
 
-		hbmp = (HBITMAP)::LoadImage(_hInst, MAKEINTRESOURCE(imageID), IMAGE_BITMAP, bmDpiDynW, bmDpiDynH, 0);
-		if (hbmp == NULL)
-			return FALSE;
-		ImageList_AddMasked(_hImaLst, hbmp, maskColour);
-		DeleteObject(hbmp);
+		::ImageList_AddIcon(_hImaLst, hIcon);
+		::DestroyIcon(hIcon);
 	}
-	va_end(argLst);
 
 	// Set image list to the tree view
 	TreeView_SetImageList(_hSelf, _hImaLst, TVSIL_NORMAL);
-	//TreeView_SetImageList(_treeViewSearchResult.getHSelf(), _hTreeViewImaLst, TVSIL_NORMAL);
 
-	return TRUE;
+	return true;
 }
 
 void TreeView::cleanSubEntries(HTREEITEM hTreeItem)
 {
 	for (HTREEITEM hItem = getChildFrom(hTreeItem); hItem != NULL; hItem = getNextSibling(hItem))
 	{
-		TVITEM tvItem;
+		TVITEM tvItem{};
 		tvItem.hItem = hItem;
 		tvItem.mask = TVIF_PARAM;
 		SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvItem));
@@ -350,7 +364,7 @@ void TreeView::foldExpandAll(bool isFold) const
 
 void TreeView::setItemImage(HTREEITEM hTreeItem, int iImage, int iSelectedImage)
 {
-	TVITEM tvItem;
+	TVITEM tvItem{};
 	tvItem.hItem = hTreeItem;
 	tvItem.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 	tvItem.iImage = iImage;
@@ -384,7 +398,7 @@ void TreeView::beginDrag(NMTREEVIEW* tv)
 void TreeView::dragItem(HWND parentHandle, int x, int y)
 {
 	// convert the dialog coords to control coords
-	POINT point;
+	POINT point{};
 	point.x = (SHORT)x;
 	point.y = (SHORT)y;
 	::ClientToScreen(parentHandle, &point);
@@ -398,7 +412,7 @@ void TreeView::dragItem(HWND parentHandle, int x, int y)
 
 	// find out if the pointer is on an item
 	// If so, highlight the item as a drop target.
-	TVHITTESTINFO hitTestInfo;
+	TVHITTESTINFO hitTestInfo{};
 	hitTestInfo.pt.x = point.x;
 	hitTestInfo.pt.y = point.y;
 	HTREEITEM targetItem = reinterpret_cast<HTREEITEM>(::SendMessage(_hSelf, TVM_HITTEST, 0, reinterpret_cast<LPARAM>(&hitTestInfo)));
@@ -486,15 +500,15 @@ bool TreeView::isParent(HTREEITEM targetItem, HTREEITEM draggedItem)
 
 void TreeView::moveTreeViewItem(HTREEITEM draggedItem, HTREEITEM targetItem)
 {
-	TCHAR textBuffer[MAX_PATH];
-	TVITEM tvDraggingItem;
+	wchar_t textBuffer[MAX_PATH]{};
+	TVITEM tvDraggingItem{};
 	tvDraggingItem.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 	tvDraggingItem.pszText = textBuffer;
 	tvDraggingItem.cchTextMax = MAX_PATH;
 	tvDraggingItem.hItem = draggedItem;
 	SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvDraggingItem));
 
-	TVINSERTSTRUCT tvInsertStruct;
+	TVINSERTSTRUCT tvInsertStruct{};
 	tvInsertStruct.item = tvDraggingItem;
 	tvInsertStruct.hInsertAfter = (HTREEITEM)TVI_LAST;
 	tvInsertStruct.hParent = targetItem;
@@ -535,10 +549,10 @@ bool TreeView::swapTreeViewItem(HTREEITEM itemGoDown, HTREEITEM itemGoUp)
 		return false;
 
 	// get both item infos
-	TCHAR textBufferUp[MAX_PATH];
-	TCHAR textBufferDown[MAX_PATH];
-	TVITEM tvUpItem;
-	TVITEM tvDownItem;
+	wchar_t textBufferUp[MAX_PATH]{};
+	wchar_t textBufferDown[MAX_PATH]{};
+	TVITEM tvUpItem{};
+	TVITEM tvDownItem{};
 	tvUpItem.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 	tvDownItem.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 	tvUpItem.pszText = textBufferUp;
@@ -551,14 +565,14 @@ bool TreeView::swapTreeViewItem(HTREEITEM itemGoDown, HTREEITEM itemGoUp)
 	SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvDownItem));
 
 	// add 2 new items
-	TVINSERTSTRUCT tvInsertUp;
+	TVINSERTSTRUCT tvInsertUp{};
 	tvInsertUp.item = tvUpItem;
 	tvInsertUp.hInsertAfter = itemTop;
 	tvInsertUp.hParent = parentGoUp;
 	HTREEITEM hTreeParent1stInserted = reinterpret_cast<HTREEITEM>(::SendMessage(_hSelf, TVM_INSERTITEM, 0, reinterpret_cast<LPARAM>(&tvInsertUp)));
 	dupTree(itemGoUp, hTreeParent1stInserted);
 
-	TVINSERTSTRUCT tvInsertDown;
+	TVINSERTSTRUCT tvInsertDown{};
 	tvInsertDown.item = tvDownItem;
 	tvInsertDown.hInsertAfter = hTreeParent1stInserted;
 	tvInsertDown.hParent = parentGoDown;
@@ -587,7 +601,7 @@ bool TreeView::swapTreeViewItem(HTREEITEM itemGoDown, HTREEITEM itemGoUp)
 
 bool TreeView::canDropIn(HTREEITEM targetItem)
 {
-	TVITEM tvItem;
+	TVITEM tvItem{};
 	tvItem.mask = TVIF_IMAGE;
 	tvItem.hItem = targetItem;
 	SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvItem));
@@ -603,7 +617,7 @@ bool TreeView::canDropIn(HTREEITEM targetItem)
 
 bool TreeView::canDragOut(HTREEITEM targetItem)
 {
-	TVITEM tvItem;
+	TVITEM tvItem{};
 	tvItem.mask = TVIF_IMAGE;
 	tvItem.hItem = targetItem;
 	SendMessage(_hSelf, TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvItem));
@@ -618,7 +632,7 @@ bool TreeView::canDragOut(HTREEITEM targetItem)
 
 
 
-bool TreeView::searchLeafAndBuildTree(TreeView & tree2Build, const generic_string & text2Search, int index2Search)
+bool TreeView::searchLeafAndBuildTree(const TreeView & tree2Build, const wstring & text2Search, int index2Search)
 {
 	//tree2Build.removeAllItems();
 	//HTREEITEM root = getRoot();
@@ -626,13 +640,13 @@ bool TreeView::searchLeafAndBuildTree(TreeView & tree2Build, const generic_strin
 	return searchLeafRecusivelyAndBuildTree(tree2Build.getRoot(), text2Search, index2Search, getRoot());
 }
 
-bool TreeView::searchLeafRecusivelyAndBuildTree(HTREEITEM tree2Build, const generic_string & text2Search, int index2Search, HTREEITEM tree2Search)
+bool TreeView::searchLeafRecusivelyAndBuildTree(HTREEITEM tree2Build, const wstring & text2Search, int index2Search, HTREEITEM tree2Search)
 {
 	if (!tree2Search)
 		return false;
 
-	TCHAR textBuffer[MAX_PATH] = { '\0' };
-	TVITEM tvItem;
+	wchar_t textBuffer[MAX_PATH] = { '\0' };
+	TVITEM tvItem{};
 	tvItem.hItem = tree2Search;
 	tvItem.pszText = textBuffer;
 	tvItem.cchTextMax = MAX_PATH;
@@ -641,13 +655,13 @@ bool TreeView::searchLeafRecusivelyAndBuildTree(HTREEITEM tree2Build, const gene
 
 	if (tvItem.iImage == index2Search)
 	{
-		generic_string itemNameUpperCase = stringToUpper(tvItem.pszText);
-		generic_string text2SearchUpperCase = stringToUpper(text2Search);
+		wstring itemNameUpperCase = stringToUpper(tvItem.pszText);
+		wstring text2SearchUpperCase = stringToUpper(text2Search);
 
 		size_t res = itemNameUpperCase.find(text2SearchUpperCase);
-		if (res != generic_string::npos)
+		if (res != wstring::npos)
 		{
-			TVINSERTSTRUCT tvInsertStruct;
+			TVINSERTSTRUCT tvInsertStruct{};
 			tvInsertStruct.item = tvItem;
 			tvInsertStruct.hInsertAfter = TVI_LAST;
 			tvInsertStruct.hParent = tree2Build;
@@ -655,14 +669,12 @@ bool TreeView::searchLeafRecusivelyAndBuildTree(HTREEITEM tree2Build, const gene
 		}
 	}
 
-	size_t i = 0;
 	bool isOk = true;
 	for (HTREEITEM hItem = getChildFrom(tree2Search); hItem != NULL; hItem = getNextSibling(hItem))
 	{
 		isOk = searchLeafRecusivelyAndBuildTree(tree2Build, text2Search, index2Search, hItem);
 		if (!isOk)
 			break;
-		++i;
 	}
 	return isOk;
 }
@@ -673,8 +685,8 @@ bool TreeView::retrieveFoldingStateTo(TreeStateNode & treeState2Construct, HTREE
 	if (!treeviewNode)
 		return false;
 
-	TCHAR textBuffer[MAX_PATH] = { '\0' };
-	TVITEM tvItem;
+	wchar_t textBuffer[MAX_PATH] = { '\0' };
+	TVITEM tvItem{};
 	tvItem.hItem = treeviewNode;
 	tvItem.pszText = textBuffer;
 	tvItem.cchTextMax = MAX_PATH;
@@ -687,7 +699,7 @@ bool TreeView::retrieveFoldingStateTo(TreeStateNode & treeState2Construct, HTREE
 
 	if (tvItem.lParam)
 	{
-		treeState2Construct._extraData = *((generic_string *)tvItem.lParam);
+		treeState2Construct._extraData = *((wstring *)tvItem.lParam);
 	}
 
 	int i = 0;
@@ -740,7 +752,7 @@ void TreeView::sort(HTREEITEM hTreeItem, bool isRecusive)
 
 void TreeView::customSorting(HTREEITEM hTreeItem, PFNTVCOMPARE sortingCallbackFunc, LPARAM lParam, bool isRecusive)
 {
-	TVSORTCB treeViewSortCB;
+	TVSORTCB treeViewSortCB{};
 	treeViewSortCB.hParent = hTreeItem;
 	treeViewSortCB.lpfnCompare = sortingCallbackFunc;
 	treeViewSortCB.lParam = lParam;

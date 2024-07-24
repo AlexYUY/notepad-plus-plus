@@ -178,13 +178,6 @@ void DrawStyledText(Surface *surface, const ViewStyle &vs, int styleOffset, PRec
 	}
 }
 
-void Hexits(char *hexits, int ch) noexcept {
-	hexits[0] = 'x';
-	hexits[1] = "0123456789ABCDEF"[ch / 0x10];
-	hexits[2] = "0123456789ABCDEF"[ch % 0x10];
-	hexits[3] = 0;
-}
-
 }
 
 EditView::EditView() {
@@ -402,7 +395,7 @@ void LayoutSegments(IPositionCache *pCache,
 * Copy the given @a line and its styles from the document into local arrays.
 * Also determine the x position at which each character starts.
 */
-void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewStyle &vstyle, LineLayout *ll, int width) {
+void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewStyle &vstyle, LineLayout *ll, int width, bool callerMultiThreaded) {
 	if (!ll)
 		return;
 	const Sci::Line line = ll->LineNumber();
@@ -487,7 +480,7 @@ void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewSt
 		bool lastSegItalics = false;
 
 		std::vector<TextSegment> segments;
-		BreakFinder bfLayout(ll, nullptr, Range(0, numCharsInLine), posLineStart, 0, BreakFinder::BreakFor::Text, model.pdoc, &model.reprs, nullptr);
+		BreakFinder bfLayout(ll, nullptr, Range(0, numCharsInLine), posLineStart, 0, BreakFinder::BreakFor::Text, model.pdoc, model.reprs.get(), nullptr);
 		while (bfLayout.More()) {
 			segments.push_back(bfLayout.Next());
 		}
@@ -498,7 +491,7 @@ void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewSt
 
 			const size_t threadsForLength = std::max(1, numCharsInLine / bytesPerLayoutThread);
 			size_t threads = std::min<size_t>({ segments.size(), threadsForLength, maxLayoutThreads });
-			if (!surface->SupportsFeature(Supports::ThreadSafeMeasureWidths)) {
+			if (!surface->SupportsFeature(Supports::ThreadSafeMeasureWidths) || callerMultiThreaded) {
 				threads = 1;
 			}
 
@@ -506,6 +499,7 @@ void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewSt
 
 			const bool textUnicode = CpUtf8 == model.pdoc->dbcsCodePage;
 			const bool multiThreaded = threads > 1;
+			const bool multiThreadedContext = multiThreaded || callerMultiThreaded;
 			IPositionCache *pCache = posCache.get();
 
 			// If only 1 thread needed then use the main thread, else spin up multiple
@@ -515,8 +509,8 @@ void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewSt
 			for (size_t th = 0; th < threads; th++) {
 				// Find relative positions of everything except for tabs
 				std::future<void> fut = std::async(policy,
-					[pCache, surface, &vstyle, &ll, &segments, &nextIndex, textUnicode, multiThreaded]() {
-					LayoutSegments(pCache, surface, vstyle, ll, segments, nextIndex, textUnicode, multiThreaded);
+					[pCache, surface, &vstyle, &ll, &segments, &nextIndex, textUnicode, multiThreadedContext]() {
+					LayoutSegments(pCache, surface, vstyle, ll, segments, nextIndex, textUnicode, multiThreadedContext);
 				});
 				futures.push_back(std::move(fut));
 			}
@@ -599,7 +593,7 @@ void EditView::LayoutLine(const EditModel &model, Surface *surface, const ViewSt
 			// Check for wrapIndent minimum
 			if ((FlagSet(vstyle.wrap.visualFlags, WrapVisualFlag::Start)) && (ll->wrapIndent < vstyle.aveCharWidth))
 				ll->wrapIndent = vstyle.aveCharWidth; // Indent to show start visual
-			ll->WrapLine(model.pdoc, posLineStart, vstyle.wrap.state);
+			ll->WrapLine(model.pdoc, posLineStart, vstyle.wrap.state, width);
 		}
 		ll->validity = LineLayout::ValidLevel::lines;
 	}
@@ -617,7 +611,7 @@ void EditView::UpdateBidiData(const EditModel &model, const ViewStyle &vstyle, L
 
 		for (int charsInLine = 0; charsInLine < ll->numCharsInLine; charsInLine++) {
 			const int charWidth = UTF8DrawBytes(&ll->chars[charsInLine], ll->numCharsInLine - charsInLine);
-			const Representation *repr = model.reprs.RepresentationFromCharacter(std::string_view(&ll->chars[charsInLine], charWidth));
+			const Representation *repr = model.reprs->RepresentationFromCharacter(std::string_view(&ll->chars[charsInLine], charWidth));
 
 			ll->bidiData->widthReprs[charsInLine] = 0.0f;
 			if (repr && ll->chars[charsInLine] != '\t') {
@@ -837,22 +831,30 @@ Sci::Position EditView::StartEndDisplayLine(Surface *surface, const EditModel &m
 
 namespace {
 
-constexpr ColourRGBA bugColour = ColourRGBA(0xff, 0, 0xfe, 0xf0);
+constexpr ColourRGBA colourBug(0xff, 0, 0xfe, 0xf0);
 
 // Selection background colours are always defined, the value_or is to show if bug
 
 ColourRGBA SelectionBackground(const EditModel &model, const ViewStyle &vsDraw, InSelection inSelection) {
 	if (inSelection == InSelection::inNone)
-		return bugColour;	// Not selected is a bug
+		return colourBug;	// Not selected is a bug
 
 	Element element = Element::SelectionBack;
 	if (inSelection == InSelection::inAdditional)
 		element = Element::SelectionAdditionalBack;
 	if (!model.primarySelection)
 		element = Element::SelectionSecondaryBack;
-	if (!model.hasFocus && vsDraw.ElementColour(Element::SelectionInactiveBack))
-		element = Element::SelectionInactiveBack;
-	return vsDraw.ElementColour(element).value_or(bugColour);
+	if (!model.hasFocus) {
+		if (inSelection == InSelection::inAdditional) {
+			if (ColourOptional colour = vsDraw.ElementColour(Element::SelectionInactiveAdditionalBack)) {
+				return *colour;
+			}
+		}
+		if (ColourOptional colour = vsDraw.ElementColour(Element::SelectionInactiveBack)) {
+			return *colour;
+		}
+	}
+	return vsDraw.ElementColour(element).value_or(colourBug);
 }
 
 ColourOptional SelectionForeground(const EditModel &model, const ViewStyle &vsDraw, InSelection inSelection) {
@@ -864,11 +866,12 @@ ColourOptional SelectionForeground(const EditModel &model, const ViewStyle &vsDr
 	if (!model.primarySelection)	// Secondary selection
 		element = Element::SelectionSecondaryText;
 	if (!model.hasFocus) {
-		if (vsDraw.ElementColour(Element::SelectionInactiveText)) {
-			element = Element::SelectionInactiveText;
-		} else {
-			return {};
+		if (inSelection == InSelection::inAdditional) {
+			if (ColourOptional colour = vsDraw.ElementColour(Element::SelectionInactiveAdditionalText)) {
+				return colour;
+			}
 		}
+		element = Element::SelectionInactiveText;
 	}
 	return vsDraw.ElementColour(element);
 }
@@ -891,20 +894,6 @@ ColourRGBA TextBackground(const EditModel &model, const ViewStyle &vsDraw, const
 		return *background;
 	} else {
 		return vsDraw.styles[styleMain].back;
-	}
-}
-
-const char *ControlCharacterString(unsigned char ch) noexcept {
-	const char *const reps[] = {
-		"NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
-		"BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
-		"DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
-		"CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US"
-	};
-	if (ch < std::size(reps)) {
-		return reps[ch];
-	} else {
-		return "BAD";
 	}
 }
 
@@ -1018,12 +1007,12 @@ void EditView::DrawEOL(Surface *surface, const EditModel &model, const ViewStyle
 			std::string_view ctrlChar;
 			Sci::Position widthBytes = 1;
 			RepresentationAppearance appearance = RepresentationAppearance::Blob;
-			const Representation *repr = model.reprs.RepresentationFromCharacter(std::string_view(&ll->chars[eolPos], ll->numCharsInLine - eolPos));
+			const Representation *repr = model.reprs->RepresentationFromCharacter(std::string_view(&ll->chars[eolPos], ll->numCharsInLine - eolPos));
 			if (repr) {
 				// Representation of whole text
 				widthBytes = ll->numCharsInLine - eolPos;
 			} else {
-				repr = model.reprs.RepresentationFromCharacter(std::string_view(&ll->chars[eolPos], 1));
+				repr = model.reprs->RepresentationFromCharacter(std::string_view(&ll->chars[eolPos], 1));
 			}
 			if (repr) {
 				ctrlChar = repr->stringRep;
@@ -1121,14 +1110,15 @@ void EditView::DrawEOL(Surface *surface, const EditModel &model, const ViewStyle
 
 	if (drawWrapMarkEnd) {
 		PRectangle rcPlace = rcSegment;
+		const XYPOSITION maxLeft = rcPlace.right - vsDraw.aveCharWidth;
 
 		if (FlagSet(vsDraw.wrap.visualFlagsLocation, WrapVisualLocation::EndByText)) {
-			rcPlace.left = xEol + xStart + virtualSpace;
+			rcPlace.left = std::min(xEol + xStart + virtualSpace, maxLeft);
 			rcPlace.right = rcPlace.left + vsDraw.aveCharWidth;
 		} else {
 			// rcLine is clipped to text area
 			rcPlace.right = rcLine.right;
-			rcPlace.left = rcPlace.right - vsDraw.aveCharWidth;
+			rcPlace.left = maxLeft;
 		}
 		if (!customDrawWrapMarker) {
 			DrawWrapMarker(surface, rcPlace, true, vsDraw.WrapColour());
@@ -1430,9 +1420,9 @@ void EditView::DrawAnnotation(Surface *surface, const EditModel &model, const Vi
 			}
 		}
 	} else {
-		// No annotation to draw so show bug with bugColour
+		// No annotation to draw so show bug with colourBug
 		if (FlagSet(phase, DrawPhase::back)) {
-			surface->FillRectangle(rcSegment, bugColour.Opaque());
+			surface->FillRectangle(rcSegment, colourBug.Opaque());
 		}
 	}
 }
@@ -1676,7 +1666,7 @@ void DrawBackground(Surface *surface, const EditModel &model, const ViewStyle &v
 	const XYPOSITION xStartVisible = subLineStart - xStart;
 
 	const BreakFinder::BreakFor breakFor = selBackDrawn ? BreakFinder::BreakFor::Selection : BreakFinder::BreakFor::Text;
-	BreakFinder bfBack(ll, &model.sel, lineRange, posLineStart, xStartVisible, breakFor, model.pdoc, &model.reprs, &vsDraw);
+	BreakFinder bfBack(ll, &model.sel, lineRange, posLineStart, xStartVisible, breakFor, model.pdoc, model.reprs.get(), &vsDraw);
 
 	const bool drawWhitespaceBackground = vsDraw.WhitespaceBackgroundDrawn() && !background;
 
@@ -1763,7 +1753,7 @@ void DrawEdgeLine(Surface *surface, const ViewStyle &vsDraw, const LineLayout *l
 void DrawMarkUnderline(Surface *surface, const EditModel &model, const ViewStyle &vsDraw,
 	Sci::Line line, PRectangle rcLine) {
 	int marks = model.GetMark(line);
-	for (int markBit = 0; (markBit < 32) && marks; markBit++) {
+	for (int markBit = 0; (markBit <= MarkerMax) && marks; markBit++) {
 		if ((marks & 1) && (vsDraw.markers[markBit].markType == MarkerSymbol::Underline) &&
 			(vsDraw.markers[markBit].layer == Layer::Base)) {
 			PRectangle rcUnderline = rcLine;
@@ -1883,7 +1873,7 @@ void DrawTranslucentLineState(Surface *surface, const EditModel &model, const Vi
 	}
 	const int marksOfLine = model.GetMark(line);
 	int marksDrawnInText = marksOfLine & vsDraw.maskDrawInText;
-	for (int markBit = 0; (markBit < 32) && marksDrawnInText; markBit++) {
+	for (int markBit = 0; (markBit <= MarkerMax) && marksDrawnInText; markBit++) {
 		if ((marksDrawnInText & 1) && (vsDraw.markers[markBit].layer == layer)) {
 			if (vsDraw.markers[markBit].markType == MarkerSymbol::Background) {
 				surface->FillRectangleAligned(rcLine, vsDraw.markers[markBit].BackWithAlpha());
@@ -1896,7 +1886,7 @@ void DrawTranslucentLineState(Surface *surface, const EditModel &model, const Vi
 		marksDrawnInText >>= 1;
 	}
 	int marksDrawnInLine = marksOfLine & vsDraw.maskInLine;
-	for (int markBit = 0; (markBit < 32) && marksDrawnInLine; markBit++) {
+	for (int markBit = 0; (markBit <= MarkerMax) && marksDrawnInLine; markBit++) {
 		if ((marksDrawnInLine & 1) && (vsDraw.markers[markBit].layer == layer)) {
 			surface->FillRectangleAligned(rcLine, vsDraw.markers[markBit].BackWithAlpha());
 		}
@@ -2079,17 +2069,11 @@ void DrawFoldLines(Surface *surface, const EditModel &model, const ViewStyle &vs
 		const ColourRGBA foldLineColour = vsDraw.ElementColour(Element::FoldLine).value_or(
 			vsDraw.styles[StyleDefault].fore);
 		// Paint the line above the fold
-		if ((subLine == 0) &&
-			((expanded && (FlagSet(model.foldFlags, FoldFlag::LineBeforeExpanded)))
-				||
-				(!expanded && (FlagSet(model.foldFlags, FoldFlag::LineBeforeContracted))))) {
+		if ((subLine == 0) && FlagSet(model.foldFlags, (expanded ? FoldFlag::LineBeforeExpanded: FoldFlag::LineBeforeContracted))) {
 			surface->FillRectangleAligned(Side(rcLine, Edge::top, 1.0), foldLineColour);
 		}
 		// Paint the line below the fold
-		if (lastSubLine &&
-			((expanded && (FlagSet(model.foldFlags, FoldFlag::LineAfterExpanded)))
-				||
-				(!expanded && (FlagSet(model.foldFlags, FoldFlag::LineAfterContracted))))) {
+		if (lastSubLine && FlagSet(model.foldFlags, (expanded ? FoldFlag::LineAfterExpanded : FoldFlag::LineAfterContracted))) {
 			surface->FillRectangleAligned(Side(rcLine, Edge::bottom, 1.0), foldLineColour);
 			// If contracted fold line drawn then don't overwrite with hidden line
 			// as fold lines are more specific then hidden lines.
@@ -2112,7 +2096,7 @@ ColourRGBA InvertedLight(ColourRGBA orig) noexcept {
 	const unsigned int l = (r + g + b) / 3; 	// There is a better calculation for this that matches human eye
 	const unsigned int il = 0xff - l;
 	if (l == 0)
-		return ColourRGBA(0xff, 0xff, 0xff);
+		return white;
 	r = r * il / l;
 	g = g * il / l;
 	b = b * il / l;
@@ -2153,7 +2137,7 @@ void EditView::DrawForeground(Surface *surface, const EditModel &model, const Vi
 	// Foreground drawing loop
 	const BreakFinder::BreakFor breakFor = (((phasesDraw == PhasesDraw::One) && selBackDrawn) || vsDraw.SelectionTextDrawn())
 		? BreakFinder::BreakFor::ForegroundAndSelection : BreakFinder::BreakFor::Foreground;
-	BreakFinder bfFore(ll, &model.sel, lineRange, posLineStart, xStartVisible, breakFor, model.pdoc, &model.reprs, &vsDraw);
+	BreakFinder bfFore(ll, &model.sel, lineRange, posLineStart, xStartVisible, breakFor, model.pdoc, model.reprs.get(), &vsDraw);
 
 	while (bfFore.More()) {
 
@@ -2733,15 +2717,15 @@ Sci::Position EditView::FormatRange(bool draw, CharacterRangeFull chrg, Rectangl
 			it->fore = InvertedLight(it->fore);
 			it->back = InvertedLight(it->back);
 		} else if (colourMode == PrintOption::BlackOnWhite) {
-			it->fore = ColourRGBA(0, 0, 0);
-			it->back = ColourRGBA(0xff, 0xff, 0xff);
+			it->fore = black;
+			it->back = white;
 		} else if (colourMode == PrintOption::ColourOnWhite || colourMode == PrintOption::ColourOnWhiteDefaultBG) {
-			it->back = ColourRGBA(0xff, 0xff, 0xff);
+			it->back = white;
 		}
 	}
 	// White background for the line numbers if PrintOption::ScreenColours isn't used
 	if (colourMode != PrintOption::ScreenColours) {
-		vsPrint.styles[StyleLineNumber].back = ColourRGBA(0xff, 0xff, 0xff);
+		vsPrint.styles[StyleLineNumber].back = white;
 	}
 
 	// Printing uses different margins, so reset screen margins

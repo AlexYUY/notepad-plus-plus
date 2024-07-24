@@ -26,6 +26,8 @@
 //	http://qualapps.blogspot.com/2010/05/understanding-readdirectorychangesw.html
 //	See ReadMe.txt for overview information.
 
+#include <string>
+
 class CReadDirectoryChanges;
 
 namespace ReadDirectoryChangesPrivate
@@ -75,9 +77,9 @@ protected:
 			LPOVERLAPPED lpOverlapped);					// I/O information buffer
 
 	// Parameters from the caller for ReadDirectoryChangesW().
-	DWORD m_dwFilterFlags = 0;
-	BOOL m_bIncludeChildren = FALSE;
 	std::wstring m_wstrDirectory;
+	BOOL m_bIncludeChildren = FALSE;
+	DWORD m_dwFilterFlags = 0;
 
 	// Result of calling CreateFile().
 	HANDLE		m_hDirectory = nullptr;
@@ -104,10 +106,7 @@ protected:
 class CReadChangesServer
 {
 public:
-	explicit CReadChangesServer(CReadDirectoryChanges* pParent)
-	{
-		m_bTerminate=false; m_nOutstandingRequests=0;m_pBase=pParent;
-	}
+	explicit CReadChangesServer(CReadDirectoryChanges* pParent): m_pBase(pParent) {}
 
 	static unsigned int WINAPI ThreadStartProc(LPVOID arg)
 	{
@@ -132,7 +131,7 @@ public:
 
 	CReadDirectoryChanges* m_pBase = nullptr;
 
-	volatile DWORD m_nOutstandingRequests;
+	volatile DWORD m_nOutstandingRequests = 0;
 
 protected:
 

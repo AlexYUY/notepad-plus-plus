@@ -21,16 +21,19 @@
 #include "clipboardHistoryPanel_rc.h"
 #include <vector>
 
-#define CH_PROJECTPANELTITLE		TEXT("Clipboard History")
-
-typedef std::vector<unsigned char> ClipboardData;
+#define CH_PROJECTPANELTITLE		L"Clipboard History"
 
 class ScintillaEditView;
+
+struct ClipboardDataInfo {
+	std::vector<unsigned char> _data;
+	bool _isBinaryContained = false;
+};
 
 class ByteArray {
 public:
 	ByteArray() = default;
-	explicit ByteArray(ClipboardData cd);
+	explicit ByteArray(const ClipboardDataInfo& cd);
 	
 	~ByteArray() {
 		if (_pBytes)
@@ -45,7 +48,7 @@ protected:
 
 class StringArray : public ByteArray {
 public:
-	StringArray(ClipboardData cd, size_t maxLen);
+	StringArray(const ClipboardDataInfo& cd, size_t maxLen);
 };
 
 class ClipboardHistoryPanel : public DockingDlgInterface {
@@ -61,9 +64,9 @@ public:
         _hParent = parent2set;
     };
 
-	ClipboardData getClipboadData();
-	void addToClipboadHistory(ClipboardData cbd);
-	int getClipboardDataIndex(ClipboardData cbd);
+	ClipboardDataInfo getClipboadData();
+	void addToClipboadHistory(ClipboardDataInfo cbd);
+	int getClipboardDataIndex(const ClipboardDataInfo& cbd);
 
 	virtual void setBackgroundColor(COLORREF bgColour) {
 		_lbBgColor = bgColour;
@@ -74,15 +77,21 @@ public:
 
 	void drawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 
+	bool trackClipboardOps(bool bTrack) {
+		bool bPreviousState = _isTrackingClipboardOps;
+		_isTrackingClipboardOps = bTrack;
+		return bPreviousState;
+	};
+
 protected:
 	virtual intptr_t CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 
 private:
 	ScintillaEditView **_ppEditView = nullptr;
-	std::vector<ClipboardData> _clipboardDataVector;
+	std::vector<ClipboardDataInfo> _clipboardDataInfos;
 	HWND _hwndNextCbViewer = nullptr;
 	int _lbBgColor = -1;
 	int _lbFgColor= -1;
-
+	bool _isTrackingClipboardOps = true; // false when we do not want to track & show some Clipboard operations
 };
 

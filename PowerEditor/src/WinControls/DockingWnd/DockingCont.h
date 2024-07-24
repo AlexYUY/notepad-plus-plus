@@ -42,6 +42,10 @@ enum eMousePos {
 #define CLOSEBTN_POS_LEFT	3
 #define CLOSEBTN_POS_TOP	3
 
+constexpr int g_dockingContCloseBtnSize = 12;
+
+constexpr int g_dockingContTabIconSize = 16;
+constexpr int g_dockingContTabIconPadding = 3;
 
 class DockingCont : public StaticDialog
 {
@@ -59,10 +63,10 @@ public:
 			return _hSelf;
 	};
 
-	tTbData* createToolbar(tTbData data);
-	void	 removeToolbar(tTbData data);
+	tTbData* createToolbar(const tTbData& data);
+	void	 removeToolbar(const tTbData& data);
 	tTbData* findToolbarByWnd(HWND hClient);
-	tTbData* findToolbarByName(TCHAR* pszName);
+	tTbData* findToolbarByName(wchar_t* pszName);
 
 	void showToolbar(tTbData *pTbData, BOOL state);
 
@@ -117,34 +121,32 @@ public:
 		updateCaption();
 	};
 
-	void setTabStyle(const BOOL & bDrawOgLine) {
-		_bDrawOgLine = bDrawOgLine;
-		RedrawWindow(_hContTab, NULL, NULL, 0);
-	};
-
-    virtual void destroy() {
-		for (int iTb = static_cast<int>(_vTbData.size()); iTb > 0; iTb--)
+	void destroy() override {
+		for (auto& tTbData : _vTbData)
 		{
-			delete _vTbData[iTb-1];
+			if (tTbData->hIconTab != nullptr)
+			{
+				::DestroyIcon(tTbData->hIconTab);
+				tTbData->hIconTab = nullptr;
+			}
+			delete tTbData;
 		}
 		::DestroyWindow(_hSelf);
 	};
+
+	void destroyFonts();
 
 protected :
 
 	// Subclassing caption
 	LRESULT runProcCaption(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndCaptionProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((DockingCont *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runProcCaption(hwnd, Message, wParam, lParam));
-	};
+	static LRESULT CALLBACK DockingCaptionSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
 	// Subclassing tab
 	LRESULT runProcTab(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndTabProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((DockingCont *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runProcTab(hwnd, Message, wParam, lParam));
-	};
+	static LRESULT CALLBACK DockingTabSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
-    virtual intptr_t CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
+	intptr_t CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
 	// drawing functions
 	void drawCaptionItem(DRAWITEMSTRUCT *pDrawItemStruct);
@@ -173,34 +175,26 @@ protected :
 private:
 	// handles
 	BOOL _isActive = FALSE;
-	bool _isFloating = FALSE;
+	bool _isFloating = false;
 	HWND _hCaption = nullptr;
 	HWND _hContTab = nullptr;
 	HWND _hTabUpdown = nullptr;
 
 	// horizontal font for caption and tab
 	HFONT _hFont = nullptr;
+	HFONT _hFontCaption = nullptr;
 
 	// caption params
-	BOOL _isTopCaption = FALSE;
-	generic_string _pszCaption;
+	BOOL _isTopCaption = CAPTION_TOP;
+	std::wstring _pszCaption;
 
 	BOOL _isMouseDown = FALSE;
 	BOOL _isMouseClose = FALSE;
 	BOOL _isMouseOver = FALSE;
-	RECT _rcCaption = {};
-	
-	// tab style
-	BOOL _bDrawOgLine = FALSE;
+	RECT _rcCaption{};
 
 	// Important value for DlgMoving class
 	BOOL _dragFromTab = FALSE;
-
-	// subclassing handle for caption
-	WNDPROC _hDefaultCaptionProc = nullptr;
-
-	// subclassing handle for tab
-	WNDPROC _hDefaultTabProc = nullptr;
 
 	// for moving and reordering
 	UINT _prevItem = 0;
@@ -212,14 +206,14 @@ private:
 
 	BOOL _bCaptionTT = FALSE;
 	BOOL _bCapTTHover = FALSE;
-	eMousePos _hoverMPos = posOutside;
+	eMousePos _hoverMPos = posClose;
 
 	int _captionHeightDynamic = HIGH_CAPTION;
 	int _captionGapDynamic = CAPTION_GAP;
 	int _closeButtonPosLeftDynamic = CLOSEBTN_POS_LEFT;
 	int _closeButtonPosTopDynamic = CLOSEBTN_POS_TOP;
-	int _closeButtonWidth = 12;
-	int _closeButtonHeight = 12;
+	int _closeButtonWidth = g_dockingContCloseBtnSize;
+	int _closeButtonHeight = g_dockingContCloseBtnSize;
 
 	// data of added windows
 	std::vector<tTbData *> _vTbData;

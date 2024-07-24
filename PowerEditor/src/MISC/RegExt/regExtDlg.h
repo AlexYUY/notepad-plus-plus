@@ -20,7 +20,7 @@
 #include "regExtDlgRc.h"
 #include "StaticDialog.h"
 
-const int extNameLen = 32;
+constexpr int extNameLen = 32;
 
 class RegExtDlg : public StaticDialog
 {
@@ -33,22 +33,22 @@ public :
 private :
 	bool _isCustomize = false;
 
-	intptr_t CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam);
+	intptr_t CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 
 	void getRegisteredExts();
 	void getDefSupportedExts();
-	void addExt(TCHAR *ext);
-	bool deleteExts(const TCHAR *ext2Delete);
+	void addExt(wchar_t *ext);
+	bool deleteExts(const wchar_t *ext2Delete);
 	void writeNppPath();
 
 	int getNbSubKey(HKEY hKey) const {
-		int nbSubKey;
+		int nbSubKey = 0;
 		long result = ::RegQueryInfoKey(hKey, NULL, NULL, NULL, (LPDWORD)&nbSubKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 		return (result == ERROR_SUCCESS)?nbSubKey:0;
 	}
 
 	int getNbSubValue(HKEY hKey) const {
-		int nbSubValue;
+		int nbSubValue = 0;
 		long result = ::RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, (LPDWORD)&nbSubValue, NULL, NULL, NULL, NULL);
 		return (result == ERROR_SUCCESS)?nbSubValue:0;
 	}

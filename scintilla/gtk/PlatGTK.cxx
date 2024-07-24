@@ -36,6 +36,7 @@
 
 #include "Scintilla.h"
 #include "ScintillaWidget.h"
+#include "CharacterType.h"
 #include "XPM.h"
 #include "UniConversion.h"
 
@@ -370,7 +371,7 @@ UniquePangoContext SurfaceImpl::MeasuringContext() {
 	pango_context_set_base_dir(contextMeasure.get(), direction);
 	pango_cairo_context_set_font_options(contextMeasure.get(), fontOptions);
 	pango_context_set_language(contextMeasure.get(), language);
-	
+
 	return contextMeasure;
 }
 
@@ -607,6 +608,8 @@ void SurfaceImpl::GradientRectangle(PRectangle rc, const std::vector<ColourStop>
 
 void SurfaceImpl::DrawRGBAImage(PRectangle rc, int width, int height, const unsigned char *pixelsImage) {
 	PLATFORM_ASSERT(context);
+	if (width == 0)
+		return;
 	if (rc.Width() > width)
 		rc.left += (rc.Width() - width) / 2;
 	rc.right = rc.left + width;
@@ -1083,6 +1086,27 @@ void SurfaceImpl::MeasureWidthsUTF8(const Font *font_, std::string_view text, XY
 		}
 		while (!iti.finished) {
 			iti.Next();
+			if (iti.curIndex < i) {
+				// Backwards movement indicater bidirectional.
+				// Divide into ASCII prefix and non-ASCII suffix as this is common case
+				// and produces accurate positions for the ASCII prefix.
+				size_t lenASCII=0;
+				while (lenASCII<text.length() && IsASCII(text[lenASCII])) {
+					lenASCII++;
+				}
+				const std::string_view asciiPrefix = text.substr(0, lenASCII);
+				const std::string_view bidiSuffix = text.substr(lenASCII);
+				// Recurse for ASCII prefix.
+				MeasureWidthsUTF8(font_, asciiPrefix, positions);
+				// Measure the whole bidiSuffix and spread its width evenly
+				const XYPOSITION endASCII = positions[lenASCII-1];
+				const XYPOSITION widthBidi = WidthText(font_, bidiSuffix);
+				const XYPOSITION widthByteBidi = widthBidi / bidiSuffix.length();
+				for (size_t bidiPos=0; bidiPos<bidiSuffix.length(); bidiPos++) {
+					positions[bidiPos+lenASCII] = endASCII + widthByteBidi * (bidiPos + 1);
+				}
+				return;
+			}
 			const int places = iti.curIndex - i;
 			while (i < iti.curIndex) {
 				// Evenly distribute space among bytes of this cluster.
@@ -1329,7 +1353,8 @@ void Window::SetCursor(Cursor curs) {
 
 	if (WindowFromWidget(PWidget(wid)))
 		gdk_window_set_cursor(WindowFromWidget(PWidget(wid)), gdkCurs);
-	UnRefCursor(gdkCurs);
+	if (gdkCurs)
+		UnRefCursor(gdkCurs);
 }
 
 /* Returns rectangle of monitor pt is on, both rect and pt are in Window's
@@ -1622,6 +1647,7 @@ void ListBoxX::Create(Window &parent, int, Point, int, bool, Technology) {
 #endif
 
 	wid = widCached = gtk_window_new(GTK_WINDOW_POPUP);
+	gtk_window_set_type_hint(GTK_WINDOW(wid), GDK_WINDOW_TYPE_HINT_POPUP_MENU);
 
 	frame = gtk_frame_new(nullptr);
 	gtk_widget_show(PWidget(frame));
@@ -2146,7 +2172,7 @@ ColourRGBA Platform::Chrome() {
 }
 
 ColourRGBA Platform::ChromeHighlight() {
-	return ColourRGBA(0xff, 0xff, 0xff);
+	return white;
 }
 
 const char *Platform::DefaultFont() {
@@ -2180,7 +2206,7 @@ void Platform::DebugPrintf(const char *format, ...) noexcept {
 	char buffer[2000];
 	va_list pArguments;
 	va_start(pArguments, format);
-	vsprintf(buffer, format, pArguments);
+	vsnprintf(buffer, std::size(buffer), format, pArguments);
 	va_end(pArguments);
 	Platform::DebugDisplay(buffer);
 }

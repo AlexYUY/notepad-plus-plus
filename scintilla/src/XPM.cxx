@@ -117,7 +117,7 @@ void XPM::Init(const char *const *linesForm) {
 	if (!linesForm)
 		return;
 
-	std::fill(colourCodeTable, std::end(colourCodeTable), ColourRGBA(0, 0, 0));
+	std::fill(colourCodeTable, std::end(colourCodeTable), black);
 	const char *line0 = linesForm[0];
 	width = atoi(line0);
 	line0 = NextField(line0);
@@ -266,7 +266,7 @@ void RGBAImage::SetPixel(int x, int y, ColourRGBA colour) noexcept {
 
 namespace {
 
-unsigned char AlphaMultiplied(unsigned char value, unsigned char alpha) {
+constexpr unsigned char AlphaMultiplied(unsigned char value, unsigned char alpha) noexcept {
 	return (value * alpha / UCHAR_MAX) & 0xffU;
 }
 

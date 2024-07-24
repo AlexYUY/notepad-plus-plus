@@ -37,7 +37,7 @@ static const WORD DotPattern[] =
 };
 
 
-#define MDLG_CLASS_NAME TEXT("moveDlg")
+#define MDLG_CLASS_NAME L"moveDlg"
 
 
 class Gripper final
@@ -83,7 +83,7 @@ protected :
 
 	void doTabReordering(POINT pt);
 	void drawRectangle(const POINT* pPt);
-	void getMousePoints(POINT* pt, POINT* ptPrev);
+	void getMousePoints(const POINT& pt, POINT& ptPrev);
 	void getMovingRect(POINT pt, RECT *rc);
 	DockingCont * contHitTest(POINT pt);
 	DockingCont * workHitTest(POINT pt, RECT *rcCont = NULL);
@@ -121,22 +121,22 @@ private:
 	DockingCont *_pCont = nullptr;
 
 	// mouse offset in moving rectangle
-	POINT _ptOffset = {};
+	POINT _ptOffset{};
 
 	// remembers old mouse point
-	POINT _ptOld = {};
+	POINT _ptOld{};
 	BOOL _bPtOldValid = FALSE;
 
 	// remember last drawn rectangle (jg)
-	RECT _rcPrev = {};
+	RECT _rcPrev{};
 
 	// for sorting tabs
 	HWND _hTab = nullptr;
 	HWND _hTabSource = nullptr;
 	BOOL _startMovingFromTab = FALSE;
 	int	_iItem = 0;
-	RECT _rcItem = {};
-	TCITEM _tcItem;
+	RECT _rcItem{};
+	TCITEM _tcItem{};
 
 	HDC _hdc = nullptr;
 	HBITMAP _hbm = nullptr;

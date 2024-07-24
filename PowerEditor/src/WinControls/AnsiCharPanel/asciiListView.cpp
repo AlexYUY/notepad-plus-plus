@@ -18,6 +18,8 @@
 #include "asciiListView.h"
 #include "Parameters.h"
 
+using namespace std;
+
 void AsciiListView::resetValues(int codepage)
 {
 	if (codepage == -1)
@@ -30,82 +32,82 @@ void AsciiListView::resetValues(int codepage)
 	setValues(codepage);
 }
 
-generic_string AsciiListView::getAscii(unsigned char value)
+wstring AsciiListView::getAscii(unsigned char value)
 {
 	switch (value)
 	{
 		case 0:
-			return TEXT("NULL");
+			return L"NULL";
 		case 1:
-			return TEXT("SOH");
+			return L"SOH";
 		case 2:
-			return TEXT("STX");
+			return L"STX";
 		case 3:
-			return TEXT("ETX");
+			return L"ETX";
 		case 4:
-			return TEXT("EOT");
+			return L"EOT";
 		case 5:
-			return TEXT("ENQ");
+			return L"ENQ";
 		case 6:
-			return TEXT("ACK");
+			return L"ACK";
 		case 7:
-			return TEXT("BEL");
+			return L"BEL";
 		case 8:
-			return TEXT("BS");
+			return L"BS";
 		case 9:
-			return TEXT("TAB");
+			return L"TAB";
 		case 10:
-			return TEXT("LF");
+			return L"LF";
 		case 11:
-			return TEXT("VT");
+			return L"VT";
 		case 12:
-			return TEXT("FF");
+			return L"FF";
 		case 13:
-			return TEXT("CR");
+			return L"CR";
 		case 14:
-			return TEXT("SO");
+			return L"SO";
 		case 15:
-			return TEXT("SI");
+			return L"SI";
 		case 16:
-			return TEXT("DLE");
+			return L"DLE";
 		case 17:
-			return TEXT("DC1");
+			return L"DC1";
 		case 18:
-			return TEXT("DC2");
+			return L"DC2";
 		case 19:
-			return TEXT("DC3");
+			return L"DC3";
 		case 20:
-			return TEXT("DC4");
+			return L"DC4";
 		case 21:
-			return TEXT("NAK");
+			return L"NAK";
 		case 22:
-			return TEXT("SYN");
+			return L"SYN";
 		case 23:
-			return TEXT("ETB");
+			return L"ETB";
 		case 24:
-			return TEXT("CAN");
+			return L"CAN";
 		case 25:
-			return TEXT("EM");
+			return L"EM";
 		case 26:
-			return TEXT("SUB");
+			return L"SUB";
 		case 27:
-			return TEXT("ESC");
+			return L"ESC";
 		case 28:
-			return TEXT("FS");
+			return L"FS";
 		case 29:
-			return TEXT("GS");
+			return L"GS";
 		case 30:
-			return TEXT("RS");
+			return L"RS";
 		case 31:
-			return TEXT("US");
+			return L"US";
 		case 32:
-			return TEXT("Space");
+			return L"Space";
 		case 127:
-			return TEXT("DEL");
+			return L"DEL";
 		default:
 		{
-			TCHAR charStr[10];
-			char ascii[2];
+			wchar_t charStr[10]{};
+			char ascii[2]{};
 			ascii[0] = value;
 			ascii[1] = '\0';
 			MultiByteToWideChar(_codepage, 0, ascii, -1, charStr, _countof(charStr));
@@ -115,217 +117,324 @@ generic_string AsciiListView::getAscii(unsigned char value)
 	}
 }
 
-generic_string AsciiListView::getHtmlName(unsigned char value)
+wstring AsciiListView::getHtmlName(unsigned char value)
 {
 	switch (value)
 	{
+		case 33:
+			return L"&excl;";
 		case 34:
-			return TEXT("&quot;");
+			return L"&quot;";
+		case 35:
+			return L"&num;";
+		case 36:
+			return L"&dollar;";
+		case 37:
+			return L"&percnt;";
 		case 38:
-			return TEXT("&amp;");
+			return L"&amp;";
+		case 39:
+			return L"&apos;";
+		case 40:
+			return L"&lpar;";
+		case 41:
+			return L"&rpar;";
+		case 42:
+			return L"&ast;";
+		case 43:
+			return L"&plus;";
+		case 44:
+			return L"&comma;";
+		case 45:
+			return L"&minus;";
+		case 46:
+			return L"&period;";
+		case 47:
+			return L"&sol;";
+		case 58:
+			return L"&colon;";
+		case 59:
+			return L"&semi;";
 		case 60:
-			return TEXT("&lt;");
+			return L"&lt;";
+		case 61:
+			return L"&equals;";
 		case 62:
-			return TEXT("&gt;");
+			return L"&gt;";
+		case 63:
+			return L"&quest;";
+		case 64:
+			return L"&commat;";
+		case 91:
+			return L"&lbrack;";
+		case 92:
+			return L"&bsol;";
+		case 93:
+			return L"&rbrack;";
+		case 94:
+			return L"&Hat;";
+		case 95:
+			return L"&lowbar;";
+		case 96:
+			return L"&grave;";
+		case 123:
+			return L"&lbrace;";
+		case 124:
+			return L"&vert;";
+		case 125:
+			return L"&rbrace;";
+		case 126:
+			return L""; // ascii tilde
 		case 128:
-			return TEXT("&euro;");
+			return L"&euro;";
+		case 130:
+			return L"&sbquo;";
+		case 131:
+			return L"&fnof;";
+		case 132:
+			return L"&bdquo;";
+		case 133:
+			return L"&hellip;";
+		case 134:
+			return L"&dagger;";
+		case 135:
+			return L"&Dagger;";
+		case 136:
+			return L"&circ;";
+		case 137:
+			return L"&permil;";
+		case 138:
+			return L"&Scaron;";
+		case 139:
+			return L"&lsaquo;";
+		case 140:
+			return L"&OElig;";
+		case 142:
+			return L"&Zcaron;";
+		case 145:
+			return L"&lsquo;";
+		case 146:
+			return L"&rsquo;";
+		case 147:
+			return L"&ldquo;";
+		case 148:
+			return L"&rdquo;";
+		case 149:
+			return L"&bull;";
+		case 150:
+			return L"&ndash;";
+		case 151:
+			return L"&mdash;";
+		case 152:
+			return L"&tilde;";
+		case 153:
+			return L"&trade;";
+		case 154:
+			return L"&scaron;";
+		case 155:
+			return L"&rsaquo;";
+		case 156:
+			return L"&oelig;";
+		case 158:
+			return L"&zcaron;";
+		case 159:
+			return L"&Yuml;";
 		case 160:
-			return TEXT("&nbsp;");
+			return L"&nbsp;";
 		case 161:
-			return TEXT("&iexcl;");
+			return L"&iexcl;";
 		case 162:
-			return TEXT("&cent;");
+			return L"&cent;";
 		case 163:
-			return TEXT("&pound;");
+			return L"&pound;";
 		case 164:
-			return TEXT("&curren;");
+			return L"&curren;";
 		case 165:
-			return TEXT("&yen;");
+			return L"&yen;";
 		case 166:
-			return TEXT("&brvbar;");
+			return L"&brvbar;";
 		case 167:
-			return TEXT("&sect;");
+			return L"&sect;";
 		case 168:
-			return TEXT("&uml;");
+			return L"&uml;";
 		case 169:
-			return TEXT("&copy;");
+			return L"&copy;";
 		case 170:
-			return TEXT("&ordf;");
+			return L"&ordf;";
 		case 171:
-			return TEXT("&laquo;");
+			return L"&laquo;";
 		case 172:
-			return TEXT("&not;");
+			return L"&not;";
 		case 173:
-			return TEXT("&shy;");
+			return L"&shy;";
 		case 174:
-			return TEXT("&reg;");
+			return L"&reg;";
 		case 175:
-			return TEXT("&macr;");
+			return L"&macr;";
 		case 176:
-			return TEXT("&deg;");
+			return L"&deg;";
 		case 177:
-			return TEXT("&plusmn;");
+			return L"&plusmn;";
 		case 178:
-			return TEXT("&sup2;");
+			return L"&sup2;";
 		case 179:
-			return TEXT("&sup3;");
+			return L"&sup3;";
 		case 180:
-			return TEXT("&acute;");
+			return L"&acute;";
 		case 181:
-			return TEXT("&micro;");
+			return L"&micro;";
 		case 182:
-			return TEXT("&para;");
+			return L"&para;";
 		case 183:
-			return TEXT("&middot;");
+			return L"&middot;";
 		case 184:
-			return TEXT("&cedil;");
+			return L"&cedil;";
 		case 185:
-			return TEXT("&sup1;");
+			return L"&sup1;";
 		case 186:
-			return TEXT("&ordm;");
+			return L"&ordm;";
 		case 187:
-			return TEXT("&raquo;");
+			return L"&raquo;";
 		case 188:
-			return TEXT("&frac14;");
+			return L"&frac14;";
 		case 189:
-			return TEXT("&frac12;");
+			return L"&frac12;";
 		case 190:
-			return TEXT("&frac34;");
+			return L"&frac34;";
 		case 191:
-			return TEXT("&iquest;");
+			return L"&iquest;";
 		case 192:
-			return TEXT("&Agrave;");
+			return L"&Agrave;";
 		case 193:
-			return TEXT("&Aacute;");
+			return L"&Aacute;";
 		case 194:
-			return TEXT("&Acirc;");
+			return L"&Acirc;";
 		case 195:
-			return TEXT("&Atilde;");
+			return L"&Atilde;";
 		case 196:
-			return TEXT("&Auml;");
+			return L"&Auml;";
 		case 197:
-			return TEXT("&Aring;");
+			return L"&Aring;";
 		case 198:
-			return TEXT("&AElig;");
+			return L"&AElig;";
 		case 199:
-			return TEXT("&Ccedil;");
+			return L"&Ccedil;";
 		case 200:
-			return TEXT("&Egrave;");
+			return L"&Egrave;";
 		case 201:
-			return TEXT("&Eacute;");
+			return L"&Eacute;";
 		case 202:
-			return TEXT("&Ecirc;");
+			return L"&Ecirc;";
 		case 203:
-			return TEXT("&Euml;");
+			return L"&Euml;";
 		case 204:
-			return TEXT("&Igrave;");
+			return L"&Igrave;";
 		case 205:
-			return TEXT("&Iacute;");
+			return L"&Iacute;";
 		case 206:
-			return TEXT("&Icirc;");
+			return L"&Icirc;";
 		case 207:
-			return TEXT("&Iuml;");
+			return L"&Iuml;";
 		case 208:
-			return TEXT("&ETH;");
+			return L"&ETH;";
 		case 209:
-			return TEXT("&Ntilde;");
+			return L"&Ntilde;";
 		case 210:
-			return TEXT("&Ograve;");
+			return L"&Ograve;";
 		case 211:
-			return TEXT("&Oacute;");
+			return L"&Oacute;";
 		case 212:
-			return TEXT("&Ocirc;");
+			return L"&Ocirc;";
 		case 213:
-			return TEXT("&Otilde;");
+			return L"&Otilde;";
 		case 214:
-			return TEXT("&Ouml;");
+			return L"&Ouml;";
 		case 215:
-			return TEXT("&times;");
+			return L"&times;";
 		case 216:
-			return TEXT("&Oslash;");
+			return L"&Oslash;";
 		case 217:
-			return TEXT("&Ugrave;");
+			return L"&Ugrave;";
 		case 218:
-			return TEXT("&Uacute;");
+			return L"&Uacute;";
 		case 219:
-			return TEXT("&Ucirc;");
+			return L"&Ucirc;";
 		case 220:
-			return TEXT("&Uuml;");
+			return L"&Uuml;";
 		case 221:
-			return TEXT("&Yacute;");
+			return L"&Yacute;";
 		case 222:
-			return TEXT("&THORN;");
+			return L"&THORN;";
 		case 223:
-			return TEXT("&szlig;");
+			return L"&szlig;";
 		case 224:
-			return TEXT("&agrave;");
+			return L"&agrave;";
 		case 225:
-			return TEXT("&aacute;");
+			return L"&aacute;";
 		case 226:
-			return TEXT("&acirc;");
+			return L"&acirc;";
 		case 227:
-			return TEXT("&atilde;");
+			return L"&atilde;";
 		case 228:
-			return TEXT("&auml;");
+			return L"&auml;";
 		case 229:
-			return TEXT("&aring;");
+			return L"&aring;";
 		case 230:
-			return TEXT("&aelig;");
+			return L"&aelig;";
 		case 231:
-			return TEXT("&ccedil;");
+			return L"&ccedil;";
 		case 232:
-			return TEXT("&egrave;");
+			return L"&egrave;";
 		case 233:
-			return TEXT("&eacute;");
+			return L"&eacute;";
 		case 234:
-			return TEXT("&ecirc;");
+			return L"&ecirc;";
 		case 235:
-			return TEXT("&euml;");
+			return L"&euml;";
 		case 236:
-			return TEXT("&igrave;");
+			return L"&igrave;";
 		case 237:
-			return TEXT("&iacute;");
+			return L"&iacute;";
 		case 238:
-			return TEXT("&icirc;");
+			return L"&icirc;";
 		case 239:
-			return TEXT("&iuml;");
+			return L"&iuml;";
 		case 240:
-			return TEXT("&eth;");
+			return L"&eth;";
 		case 241:
-			return TEXT("&ntilde;");
+			return L"&ntilde;";
 		case 242:
-			return TEXT("&ograve;");
+			return L"&ograve;";
 		case 243:
-			return TEXT("&oacute;");
+			return L"&oacute;";
 		case 244:
-			return TEXT("&ocirc;");
+			return L"&ocirc;";
 		case 245:
-			return TEXT("&otilde;");
+			return L"&otilde;";
 		case 246:
-			return TEXT("&ouml;");
+			return L"&ouml;";
 		case 247:
-			return TEXT("&divide;");
+			return L"&divide;";
 		case 248:
-			return TEXT("&oslash;");
+			return L"&oslash;";
 		case 249:
-			return TEXT("&ugrave;");
+			return L"&ugrave;";
 		case 250:
-			return TEXT("&uacute;");
+			return L"&uacute;";
 		case 251:
-			return TEXT("&ucirc;");
+			return L"&ucirc;";
 		case 252:
-			return TEXT("&uuml;");
+			return L"&uuml;";
 		case 253:
-			return TEXT("&yacute;");
+			return L"&yacute;";
 		case 254:
-			return TEXT("&thorn;");
+			return L"&thorn;";
 		case 255:
-			return TEXT("&yuml;");
+			return L"&yuml;";
 		default:
 		{
-			return TEXT("");
+			return L"";
 		}
-		
 	}
 }
 
@@ -333,6 +442,8 @@ int AsciiListView::getHtmlNumber(unsigned char value)
 {
 	switch (value)
 	{
+		case 45:
+			return 8722;
 		case 128:
 			return 8364;
 		case 130:
@@ -347,12 +458,18 @@ int AsciiListView::getHtmlNumber(unsigned char value)
 			return 8224;
 		case 135:
 			return 8225;
+		case 136:
+			return 710;
 		case 137:
 			return 8240;
 		case 138:
 			return 352;
+		case 139:
+			return 8249;
 		case 140:
 			return 338;
+		case 142:
+			return 381;
 		case 145:
 			return 8216;
 		case 146:
@@ -367,19 +484,24 @@ int AsciiListView::getHtmlNumber(unsigned char value)
 			return 8211;
 		case 151:
 			return 8212;
+		case 152:
+			return 732;
 		case 153:
 			return 8482;
 		case 154:
 			return 353;
+		case 155:
+			return 8250;
 		case 156:
 			return 339;
+		case 158:
+			return 382;
 		case 159:
 			return 376;
 		default:
 		{
 			return -1;
 		}
-		
 	}
 }
 
@@ -390,30 +512,35 @@ void AsciiListView::setValues(int codepage)
 	for (int i = 0 ; i < 256 ; ++i)
 	{
 		constexpr size_t bufSize = 8;
-		TCHAR dec[bufSize];
-		TCHAR hex[bufSize];
-		TCHAR htmlNumber[bufSize];
-		generic_string htmlName;
-		swprintf(dec, bufSize, TEXT("%d"), i);
-		swprintf(hex, bufSize, TEXT("%02X"), i);
-		generic_string s = getAscii(static_cast<unsigned char>(i));
+		constexpr size_t bufSizeHex = 9;
+		wchar_t dec[bufSize]{};
+		wchar_t hex[bufSize]{};
+		wchar_t htmlNumber[bufSize]{};
+		wchar_t htmlHexNumber[bufSizeHex]{};
+		wstring htmlName;
+		swprintf(dec, bufSize, L"%d", i);
+		swprintf(hex, bufSize, L"%02X", i);
+		wstring s = getAscii(static_cast<unsigned char>(i));
 
 		if (codepage == 0 || codepage == 1252)
 		{
-			if ((i >= 32 && i <= 126) || (i >= 160 && i <= 255))
+			if ((i >= 32 && i <= 126 && i != 45) || (i >= 160 && i <= 255))
 			{
-				swprintf(htmlNumber, bufSize, TEXT("&#%d"), i);
+				swprintf(htmlNumber, bufSize, L"&#%d;", i);
+				swprintf(htmlHexNumber, bufSize, L"&#x%x;", i);
 			}
 			else
 			{
 				int n = getHtmlNumber(static_cast<unsigned char>(i));
 				if (n > -1)
 				{
-					swprintf(htmlNumber, bufSize, TEXT("&#%d"), n);
+					swprintf(htmlNumber, bufSize, L"&#%d;", n);
+					swprintf(htmlHexNumber, bufSizeHex, L"&#x%x;", n);
 				}
 				else
 				{
-					swprintf(htmlNumber, bufSize, TEXT(""));
+					swprintf(htmlNumber, bufSize, L"");
+					swprintf(htmlHexNumber, bufSizeHex, L"");
 				}
 			}
 
@@ -421,17 +548,19 @@ void AsciiListView::setValues(int codepage)
 		}
 		else
 		{
-			swprintf(htmlNumber, bufSize, TEXT(""));
-			htmlName = TEXT("");
+			swprintf(htmlNumber, bufSize, L"");
+			swprintf(htmlHexNumber, bufSizeHex, L"");
+			htmlName = L"";
 		}
 
-		std::vector<generic_string> values2Add;
+		std::vector<wstring> values2Add;
 
 		values2Add.push_back(dec);
 		values2Add.push_back(hex);
 		values2Add.push_back(s);
-		values2Add.push_back(htmlNumber);
 		values2Add.push_back(htmlName);
+		values2Add.push_back(htmlNumber);
+		values2Add.push_back(htmlHexNumber);
 
 		addLine(values2Add);
 	}

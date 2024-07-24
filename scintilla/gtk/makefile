@@ -29,7 +29,6 @@ WARNINGS += -Wno-language-extension-token
 # register may be used in glib
 # This produces a warning since -Wno-register is not valid for C files but it still works
 WARNINGS += -Wno-register
-DEFINES += -D_CRT_SECURE_NO_DEPRECATE
 endif
 # Can choose aspect to sanitize: address and undefined can simply change SANITIZE but for
 # thread also need to create Position Independent Executable -> search online documentation
@@ -150,6 +149,7 @@ SRC_OBJS = \
 	RunStyles.o \
 	Selection.o \
 	Style.o \
+	UndoHistory.o \
 	UniConversion.o \
 	UniqueString.o \
 	ViewStyle.o \

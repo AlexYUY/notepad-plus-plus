@@ -20,7 +20,7 @@ inline static DWORD GetExStyle(HWND hWnd) {
 	return (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 }
 
-const UINT WM_WINMGR = RegisterWindowMessage(TEXT("WM_WINMGR"));
+const UINT WM_WINMGR = RegisterWindowMessage(L"WM_WINMGR");
 
 CWinMgr::CWinMgr(WINRECT* pWinMap) : m_map(pWinMap)
 {
@@ -212,7 +212,7 @@ CWinMgr::AdjustSize(WINRECT* wrc, BOOL bRow,
 	int hw = bRow ? szi.szDesired.cy : szi.szDesired.cx; // desired ht or wid
 	if (wrc->Type() == WRCT_REST) {
 		// for REST type, use all remaining space
-		RECT& rc = wrc->GetRect();
+		const RECT& rc = wrc->GetRect();
 		hw = hwRemaining + (bRow ? RectHeight(rc) : RectWidth(rc));
 	}
 
@@ -317,7 +317,7 @@ CWinMgr::OnGetSizeInfo(SIZEINFO& szi, WINRECT* wrc, HWND hWnd)
 		// not a group
 		WINRECT* parent = wrc->Parent();
 		assert(parent);
-		RECT& rcParent = parent->GetRect();
+		const RECT& rcParent = parent->GetRect();
 		BOOL bRow = parent->IsRowGroup();
 		int hw, hwMin, hwTotal, pct;
 

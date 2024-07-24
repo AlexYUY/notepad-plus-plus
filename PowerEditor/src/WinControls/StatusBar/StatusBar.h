@@ -35,22 +35,22 @@ public:
 
 	bool setPartWidth(int whichPart, int width);
 
-	virtual void destroy() override;
+	void destroy() override;
     virtual void reSizeTo(const RECT& rc);
 
 	int getHeight() const override;
 
-    bool setText(const TCHAR* str, int whichPart);
-	bool setOwnerDrawText(const TCHAR* str);
+    bool setText(const wchar_t* str, int whichPart);
+	bool setOwnerDrawText(const wchar_t* str);
 	void adjustParts(int clientWidth);
 
 
 private:
-	virtual void init(HINSTANCE hInst, HWND hPere) override;
+	void init(HINSTANCE hInst, HWND hPere) override;
 
 private:
     std::vector<int> _partWidthArray;
 	int *_lpParts = nullptr;
-	generic_string _lastSetText;
+	std::wstring _lastSetText;
 	StatusBarSubclassInfo* _pStatusBarInfo = nullptr;
 };

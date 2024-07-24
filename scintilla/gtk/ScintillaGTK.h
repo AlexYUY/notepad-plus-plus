@@ -33,6 +33,8 @@ class ScintillaGTK : public ScintillaBase {
 	int verticalScrollBarWidth;
 	int horizontalScrollBarHeight;
 
+	PRectangle rectangleClient;
+
 	SelectionText primary;
 	SelectionPosition posPrimary;
 
@@ -128,6 +130,7 @@ private:
 	bool HaveMouseCapture() override;
 	bool PaintContains(PRectangle rc) override;
 	void FullPaint();
+	void SetClientRectangle();
 	PRectangle GetClientRectangle() const override;
 	void ScrollText(Sci::Line linesToMove) override;
 	void SetVerticalScrollPos() override;
@@ -290,7 +293,7 @@ private:
 class GObjectWatcher {
 	GObject *weakRef;
 
-	void WeakNotifyThis(GObject *obj G_GNUC_UNUSED) {
+	void WeakNotifyThis([[maybe_unused]] GObject *obj) {
 		PLATFORM_ASSERT(obj == weakRef);
 
 		Destroyed();

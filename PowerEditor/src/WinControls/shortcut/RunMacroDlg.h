@@ -21,19 +21,11 @@
 #include "RunMacroDlg_rc.h"
 #include "StaticDialog.h"
 
-#define RM_CANCEL -1
-#define RM_RUN_MULTI 1
-#define RM_RUN_EOF 2
-
 class RunMacroDlg : public StaticDialog
 {
 public :
 	RunMacroDlg() = default;
 	~RunMacroDlg() = default;
-
-	void init(HINSTANCE hInst, HWND hPere/*, ScintillaEditView **ppEditView*/) {
-		Window::init(hInst, hPere);
-	};
 
 	void doDialog(bool isRTL = false) {
 		if (!isCreated())
@@ -44,20 +36,19 @@ public :
 			// So reload the macro list (issue #4526)
 			initMacroList();
 			::ShowWindow(_hSelf, SW_SHOW);
+			::SendMessageW(_hSelf, DM_REPOSITION, 0, 0);
 		}
 	};
 
 	void initMacroList();
 
-	int getMode() const {return _mode;};
+	int isMulti() const { return isCheckedOrNot(IDC_M_RUN_MULTI); };
 	int getTimes() const {return _times;};
 	int getMacro2Exec() const;
 
 private :
-	virtual intptr_t CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
-	void check(int);
+	intptr_t CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
-	int _mode = RM_RUN_MULTI;
 	int _times = 1;
 	int _macroIndex = 0;
 };

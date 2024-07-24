@@ -35,7 +35,7 @@ static LRESULT CALLBACK hookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	else if ((nCode >= 0) && (wParam == WM_MOUSEWHEEL) && windowsVersion >= WV_WIN10)
 	{
 		MSLLHOOKSTRUCT* pMD = (MSLLHOOKSTRUCT*)lParam;
-		RECT rCtrl;
+		RECT rCtrl{};
 		GetWindowRect(hWndServer, &rCtrl);
 		//to avoid duplicate messages, only send this message to the list control if it comes from outside the control window. if the message occurs whilst the mouse is inside the control, the control will have receive the mouse wheel message itself
 		if (false == PtInRect(&rCtrl, pMD->pt))
@@ -51,8 +51,8 @@ static LRESULT CALLBACK hookProc(int nCode, WPARAM wParam, LPARAM lParam)
  {
 	if (isRTL)
 	{
-		DLGTEMPLATE *pMyDlgTemplate = NULL;
-		HGLOBAL hMyDlgTemplate = makeRTLResource(IDD_VALUE_DLG, &pMyDlgTemplate);
+		DLGTEMPLATE *pMyDlgTemplate = nullptr;
+		HGLOBAL hMyDlgTemplate = makeRTLResource(IDD_TASKLIST_DLG, &pMyDlgTemplate);
 		int result = static_cast<int32_t>(::DialogBoxIndirectParam(_hInst, pMyDlgTemplate, _hParent, dlgProc, reinterpret_cast<LPARAM>(this)));
 		::GlobalFree(hMyDlgTemplate);
 		return result;
@@ -80,7 +80,7 @@ intptr_t CALLBACK TaskListDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 				i2set = 0;
 
 			_taskList.init(_hInst, _hSelf, _hImalist, nbTotal, i2set);
-			_taskList.setFont(TEXT("Verdana"), NppParameters::getInstance()._dpiManager.scaleY(14));
+			_taskList.setFont(L"Verdana", NppParameters::getInstance()._dpiManager.scaleY(14));
 			_rc = _taskList.adjustSize();
 
 			reSizeTo(_rc);
@@ -101,11 +101,7 @@ intptr_t CALLBACK TaskListDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 		case WM_CTLCOLORDLG:
 		case WM_CTLCOLORSTATIC:
 		{
-			if (NppDarkMode::isEnabled())
-			{
-				return NppDarkMode::onCtlColorDarker(reinterpret_cast<HDC>(wParam));
-			}
-			break;
+			return NppDarkMode::onCtlColorDarker(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_PRINTCLIENT:
@@ -150,11 +146,11 @@ intptr_t CALLBACK TaskListDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 			{
 				case LVN_GETDISPINFO:
 				{
-					LV_ITEM &lvItem = reinterpret_cast<LV_DISPINFO*>(reinterpret_cast<LV_DISPINFO FAR *>(lParam))->item;
+					LV_ITEM &lvItem = reinterpret_cast<LV_DISPINFO FAR *>(lParam)->item;
 
 					TaskLstFnStatus & fileNameStatus = _taskListInfo._tlfsLst[lvItem.iItem];
 
-					lvItem.pszText = (TCHAR *)fileNameStatus._fn.c_str();
+					lvItem.pszText = (wchar_t *)fileNameStatus._fn.c_str();
 					lvItem.iImage = fileNameStatus._status;
 
 					return TRUE;
@@ -204,10 +200,10 @@ void TaskListDlg::drawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	RECT rect = lpDrawItemStruct->rcItem;
 	HDC hDC = lpDrawItemStruct->hDC;
 	int nItem = lpDrawItemStruct->itemID;
-	const TCHAR *label = _taskListInfo._tlfsLst[nItem]._fn.c_str();
+	const wchar_t *label = _taskListInfo._tlfsLst[nItem]._fn.c_str();
 	int iImage = _taskListInfo._tlfsLst[nItem]._status;
 
-	const int aSpaceWidth = ListView_GetStringWidth(_taskList.getHSelf(), TEXT(" "));
+	const int aSpaceWidth = ListView_GetStringWidth(_taskList.getHSelf(), L" ");
 
 	COLORREF textColor = NppDarkMode::isEnabled() ? NppDarkMode::getDarkerTextColor() : darkGrey;
 	int imgStyle = ILD_SELECTED;
@@ -224,7 +220,7 @@ void TaskListDlg::drawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	//
 	HIMAGELIST hImgLst = _taskList.getImgLst();
 
-	IMAGEINFO info;
+	IMAGEINFO info{};
 	::ImageList_GetImageInfo(hImgLst, iImage, &info);
 
 	RECT & imageRect = info.rcImage;
@@ -239,5 +235,5 @@ void TaskListDlg::drawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	// DRAW TEXT
 	//
 	::SetTextColor(hDC, textColor);
-	::DrawText(hDC, label, lstrlen(label), &rect, DT_SINGLELINE | DT_VCENTER | DT_LEFT);
+	::DrawText(hDC, label, lstrlen(label), &rect, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 }

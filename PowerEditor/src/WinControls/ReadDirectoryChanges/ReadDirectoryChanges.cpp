@@ -35,11 +35,8 @@ using namespace ReadDirectoryChangesPrivate;
 ///////////////////////////////////////////////////////////////////////////
 // CReadDirectoryChanges
 
-CReadDirectoryChanges::CReadDirectoryChanges()
-	: m_Notifications()
+CReadDirectoryChanges::CReadDirectoryChanges(): m_Notifications()
 {
-	m_hThread	= NULL;
-	m_dwThreadId= 0;
 	m_pServer	= new CReadChangesServer(this);
 }
 
@@ -81,6 +78,9 @@ void CReadDirectoryChanges::AddDirectory( LPCTSTR szDirectory, BOOL bWatchSubtre
 {
 	if (!m_hThread)
 		Init();
+
+	if (!m_hThread)
+		return;
 
 	CReadChangesRequest* pRequest = new CReadChangesRequest(m_pServer, szDirectory, bWatchSubtree, dwNotifyFilter, dwBufferSize);
 	QueueUserAPC(CReadChangesServer::AddDirectoryProc, m_hThread, (ULONG_PTR)pRequest);

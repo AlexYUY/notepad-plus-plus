@@ -84,7 +84,7 @@ void Gripper::startGrip(DockingCont* pCont, DockingManager* pDockMgr)
 
 	if (!_isRegistered)
 	{
-		WNDCLASS clz;
+		WNDCLASS clz{};
 
 		clz.style = 0;
 		clz.lpfnWndProc = staticWinProc;
@@ -108,7 +108,7 @@ void Gripper::startGrip(DockingCont* pCont, DockingManager* pDockMgr)
 	_hSelf = ::CreateWindowEx(
 					0,
 					MDLG_CLASS_NAME,
-					TEXT(""), 0,
+					L"", 0,
 					CW_USEDEFAULT, CW_USEDEFAULT,
 					CW_USEDEFAULT, CW_USEDEFAULT,
 					NULL,
@@ -130,7 +130,7 @@ LRESULT CALLBACK Gripper::staticWinProc(HWND hwnd, UINT message, WPARAM wParam, 
 	switch (message)
 	{
 		case WM_NCCREATE :
-			pDlgMoving = reinterpret_cast<Gripper *>(reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams);
+			pDlgMoving = static_cast<Gripper *>(reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams);
 			pDlgMoving->_hSelf = hwnd;
 			::SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pDlgMoving));
 			return TRUE;
@@ -179,7 +179,7 @@ LRESULT Gripper::runProc(UINT message, WPARAM wParam, LPARAM lParam)
 			POINT			ptBuf		= {0,0};
 
 			::GetCursorPos(&pt);
-			getMousePoints(&pt, &ptBuf);
+			getMousePoints(pt, ptBuf);
 
 			/* erase last drawn rectangle */
 			drawRectangle(NULL);
@@ -221,9 +221,9 @@ void Gripper::create()
     if (!hookMouse)
     {
         DWORD dwError = ::GetLastError();
-        TCHAR  str[128];
-        ::wsprintf(str, TEXT("GetLastError() returned %lu"), dwError);
-        ::MessageBox(NULL, str, TEXT("SetWindowsHookEx(MOUSE) failed on Gripper::create()"), MB_OK | MB_ICONERROR);
+        wchar_t  str[128];
+        ::wsprintf(str, L"GetLastError() returned %lu", dwError);
+        ::MessageBox(NULL, str, L"SetWindowsHookEx(MOUSE) failed on Gripper::create()", MB_OK | MB_ICONERROR);
     }
 
 	if (ver != WV_UNKNOWN && ver < WV_VISTA)
@@ -232,9 +232,9 @@ void Gripper::create()
 		if (!hookKeyboard)
 		{
 			DWORD dwError = ::GetLastError();
-			TCHAR  str[128];
-			::wsprintf(str, TEXT("GetLastError() returned %lu"), dwError);
-			::MessageBox(NULL, str, TEXT("SetWindowsHookEx(KEYBOARD) failed on Gripper::create()"), MB_OK | MB_ICONERROR);
+			wchar_t  str[128];
+			::wsprintf(str, L"GetLastError() returned %lu", dwError);
+			::MessageBox(NULL, str, L"SetWindowsHookEx(KEYBOARD) failed on Gripper::create()", MB_OK | MB_ICONERROR);
 		}
 	}
 //  Removed regarding W9x systems
@@ -267,7 +267,7 @@ void Gripper::onMove()
 	POINT		ptBuf	= {0,0};
 
 	::GetCursorPos(&pt);
-	getMousePoints(&pt, &ptBuf);
+	getMousePoints(pt, ptBuf);
 
 	/* tab reordering only when tab was selected */
 	if (_startMovingFromTab == TRUE)
@@ -287,7 +287,7 @@ void Gripper::onButtonUp()
 	RECT			rcCorr		= {};
 
 	::GetCursorPos(&pt);
-	getMousePoints(&pt, &ptBuf);
+	getMousePoints(pt, ptBuf);
 
 	// do nothing, when old point is not valid
 	if (_bPtOldValid == FALSE)
@@ -443,7 +443,7 @@ void Gripper::doTabReordering(POINT pt)
 			auto iSel = ::SendMessage(_hTab, TCM_GETCURSEL, 0, 0);
 			::SendMessage(_hTab, TCM_DELETEITEM, iSel, 0);
 		}
-		else if (_hTab == hTabOld)
+		else if (_hTab && _hTab == hTabOld)
 		{
 			// delete item on switch between tabs
 			::SendMessage(_hTab, TCM_DELETEITEM, iItemOld, 0);
@@ -473,8 +473,8 @@ void Gripper::doTabReordering(POINT pt)
 
 #if 0
 	extern HWND g_hMainWnd;
-	TCHAR str[128];
-	wsprintf(str, TEXT("Size: %i"), vCont.size());
+	wchar_t str[128];
+	wsprintf(str, L"Size: %i", vCont.size());
 	::SetWindowText(g_hMainWnd, str);
 #endif
 
@@ -623,10 +623,10 @@ void Gripper::drawRectangle(const POINT* pPt)
 }
 
 
-void Gripper::getMousePoints(POINT* pt, POINT* ptPrev)
+void Gripper::getMousePoints(const POINT& pt, POINT& ptPrev)
 {
-	*ptPrev	= _ptOld;
-	_ptOld	= *pt;
+	ptPrev	= _ptOld;
+	_ptOld	= pt;
 }
 
 
@@ -835,7 +835,7 @@ void Gripper::initTabInformation()
 	::SendMessage(_hTabSource, TCM_GETITEMRECT, _iItem, reinterpret_cast<LPARAM>(&_rcItem));
 
 	/* store item data */
-	static TCHAR	szText[64];
+	static wchar_t	szText[64];
 	_tcItem.mask		= TCIF_PARAM | TCIF_TEXT;
 	_tcItem.pszText		= szText;
 	_tcItem.cchTextMax	= 64;
